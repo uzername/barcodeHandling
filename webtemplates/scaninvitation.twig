@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <link type="text/css" rel="stylesheet" href="../webtemplatesresources/main.css" >
+        <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
+        <script type="text/javascript" src="../webtemplatesresources/scannerhandler/jquery.scannerdetection.js"> </script>
+        <script type="text/javascript">
+            //send obtained data to server by XHR
+            function processBarcode(in_stringBarcodeToProcess) {
+                // https://learn.javascript.ru/ajax-xmlhttprequest
+                // https://learn.javascript.ru/xhr-forms
+                // https://learn.javascript.ru/ajax
+                var stringContent = in_stringBarcodeToProcess;
+                if (stringContent === "") {return;}
+                var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                
+                var o1 = { scannedbarcode: "" }; 
+                //remove non-printable ASCII characters, just to be sure
+                o1.scannedbarcode = stringContent.replace(/[^\x20-\x7E]/g, '=');
+                var jsonbody = JSON.stringify(o1);
+                XHR.open("POST", "/recvbarcode", true);
+                XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                    if (XHR.status != 200) {
+                        alert(XHR.status + ': ' + XHR.statusText);
+                    } else {
+                        alert(XHR.responseText);
+                    }                    
+                };
+                XHR.setRequestHeader('Content-Type', 'application/json');
+                XHR.send(jsonbody);
+            }
+            $(document).ready(function() {
+                $("#div-clickhere").click( //show hide fallback input form
+                    function() {
+                        $("#div-inputfield").toggle();
+                        }  );
+                $("#manualstart").click( //handler for button inside input form
+                    function() {
+                        processBarcode( $("#manualentry").val() );
+                        } );
+                });
+                    
+            $(document).scannerDetection({
+                    timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+                    startChar: [], // Prefix character for the cabled scanner (OPL6845R)
+                    endChar: [13,10], // be sure the scan is complete if key 13 (enter) is detected
+                    avgTimeByChar: 40, // it's not a barcode if a character takes longer than 40ms
+                    onComplete: function(barcode, qty){ 
+                       processBarcode(barcode);
+                    } // main callback function	
+            });
+        </script>
+
+    </head>
+    <body>
+        <!-- detect barcode scanner input with http://a.kabachnik.info/jquery-scannerdetection-tutorial.html -->
+        <!-- https://github.com/kabachello/jQuery-Scanner-Detection -->
+        <div id="div-scanmain">
+            <div style="width:100%;text-align: right"> <a href="/list">[list]</a> </div>
+            <div class="div-scanplease"> {{ localizedmessages['invitation']|default('Scan some barcode!')|e }} </div>
+            <div id="div-clickhere"> {{ localizedmessages['invitationclick']|default('[or click here to show form and type in data with keypad]')|e }} </div>
+            <div id="div-inputfield"> 
+                <input type="text" name="manualinputfield" id="manualentry">
+                <input type="button" name="manualinputbutton" value=">>>" id="manualstart">
+            </div>
+        </div>
+    </body>
+</html>

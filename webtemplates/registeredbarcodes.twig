@@ -1,0 +1,64 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
+        <script type="text/javascript">
+            function processEntry(in_stringEntryToProcess) {
+                // https://learn.javascript.ru/ajax-xmlhttprequest
+                // https://learn.javascript.ru/xhr-forms
+                // https://learn.javascript.ru/ajax
+                var stringContent = in_stringEntryToProcess;
+                if (stringContent === "") {return;}
+                var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                
+                var o1 = { newbarcode: "" }; 
+                //remove non-printable ASCII characters, just to be sure
+                o1.newbarcode = stringContent;
+                var jsonbody = JSON.stringify(o1);
+                XHR.open("POST", "/newbarcode", true);
+                XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                    if (XHR.status != 200) {
+                        alert(XHR.status + ': ' + XHR.statusText);
+                    } else {
+                        //alert(XHR.responseText);
+                        var rawresponse = JSON.parse(XHR.responseText);
+                        console.log(rawresponse);
+                    }                    
+                };
+                XHR.setRequestHeader('Content-Type', 'application/json');
+                XHR.send(jsonbody);
+            }
+            $(document).ready(function() {
+
+                $("#newcodebtn").click( //handler for button inside input form
+                    function() {
+                        processEntry( $("#newcodeinput").val() );
+                        } );
+                });
+        </script>
+    </head>
+    <body>
+        <form>
+            <input type="text" name="newcodeinput" id="newcodeinput">
+            
+            <input type="button" value="[>>>]" name="newcodebtn" id="newcodebtn">
+        </form>
+        <table>
+            {% for singleregistration in registeredinfo %}
+            <tr> 
+                <td>{{ singleregistration.ID|default('-----')|e }}</td>
+                <td>{{ singleregistration.PATHTOBARCODE|default('-----')|e }}</td>
+                {% if singleregistration.PATHTOBARCODE is not empty %}
+                <td><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
+                {% else %}
+                <td> ----- </td>
+                {% endif %}
+                <td>{{ singlescan.RAWBARCODEREGISTERED|default('-----')|e }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+    </body>
+</html>

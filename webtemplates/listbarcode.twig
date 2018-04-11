@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+         <style>
+            table {
+            border-collapse: collapse;    
+            }
+            table, th, td {
+            border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="width:100%"> <a href="/">[<<<]</a> </div>
+        <table>
+            
+            {% for singlescan in scanlist %}
+            <tr> 
+                <td>{{ singlescan.ID|default('-----')|e }}</td>
+                <td>{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}</td>
+                <td>{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
+                <td>{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
+            </tr>
+            {% endfor %}
+            
+        </table>
+    </body>
+</html>
