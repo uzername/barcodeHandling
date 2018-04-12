@@ -42,10 +42,9 @@
                     } else {
                         //alert(XHR.responseText);
                         var obtainedSuccessResponse = JSON.parse(XHR.responseText);
-                        console.log(obtainedSuccessResponse);
-                        console.log(obtainedSuccessResponse[0].status);
+                       // console.log(obtainedSuccessResponse);
+                       // console.log(obtainedSuccessResponse[0].status);
                         if (obtainedSuccessResponse[0].status==="OK") {
-                            console.log("here");
                             messageHandlerInstance.renderMessage("OK",0);
                         }
                         

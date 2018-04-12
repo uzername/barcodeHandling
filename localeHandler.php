@@ -6,12 +6,14 @@
 class localeHandler {
     private $completeLocalization = [
     "en" => array(
-        "common"=>["header"=>"SM_NM Scanner" ],
+        "common"=>["header"=>"SM_NM Scanner",
+            "scannedlist"=>"[List Of registered Scans]",
+            "registeredlist"=>"[List of Registered Barcodes]",
+            ],
         "page-main"=>[
             "invitation"=>"Scan some barcode!",
             "invitationclick"=>"[or click here to show form and type in data with keypad]",
-            "scannedlist"=>"[List Of registered Scans]",
-            "registeredlist"=>"[List of Registered Barcodes]",
+
             ],
         "page-registeredbarcodes"=>[
             "registeredlistcaption"=>"[List of Registered Barcodes]"
@@ -19,12 +21,14 @@ class localeHandler {
             ]
         ),
     "ru" => array(
-        "common"=>["header"=>"SM_NM Сканнер" ],
+        "common"=>["header"=>"SM_NM Сканнер",
+            "scannedlist"=>"[Список отсканированных элементов]",
+            "registeredlist"=>"[Список зарегистрированных элементов]"
+            ],
         "page-main"=>[
             "invitation"=>"Отсканируйте штрихкод!",
             "invitationclick"=>"[Или нажмите здесь чтобы показать строчку и набрать самому (если сканер штрихкодов не работает)]",
-            "scannedlist"=>"[Список отсканированных элементов]",
-            "registeredlist"=>"[Список зарегистрированных элементов]"
+
             ],
         "page-registeredbarcodes"=>[
             "registeredlistcaption"=>"[Список зарегистрированных элементов]"

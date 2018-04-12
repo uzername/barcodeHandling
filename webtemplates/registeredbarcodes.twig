@@ -24,9 +24,14 @@
                     } else {
                         //alert(XHR.responseText);
                         var rawresponse = JSON.parse(XHR.responseText);
-                        console.log(rawresponse);
-                        //add here barcode to list
-                        
+                        // add here barcode to list
+                        if (rawresponse[0].status==="OK") {
+                            var $newrow = $("<tr> </tr>");
+                            $newrow.append("<td> ----- </td>");
+                            $newrow.append("<td> "+rawresponse[0].addedfilepath+" </td>");
+                            $newrow.append("<td> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
+                            $("table").append($newrow);
+                        }
                     }                    
                 };
                 XHR.setRequestHeader('Content-Type', 'application/json');
