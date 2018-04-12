@@ -7,6 +7,7 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 require_once './config_file.php';
 require_once './DatabaseHandler.php';
+require_once './localeHandler.php';
 
 $app = new \Slim\App(['settings' => $config]);
 $container = $app->getContainer();
@@ -41,8 +42,35 @@ $container['logger'] = function($c) {
 };
 
 $app->get('/',function(Request $request, Response $response, array $args){
-    return $this->view->render($response, "scaninvitation.twig");
+    //get current language from session and set of localized strings. just like in opencart
+    session_start();
+    $privateLocaleHandler = new localeHandler();
+    $templateTransmission = [];
+    $templateTransmission['wayback'] = "";
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+        
+    }
+    $mainpagesubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-main");
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $templateTransmission["localizedmessages"] = $mainpagesubarray+$commonsubarray;
+    return $this->view->render($response, "scaninvitation.twig", $templateTransmission);
 });
+
+$app->get('/changelanguage[/]', function(Request $request, Response $response, array $args) {
+    session_start();
+    $paramValue = $request->getQueryParam('newlang');
+    $paramValueWayBack = $request->getQueryParam('wayback');
+    $localeHandlerInstance = new localeHandler();
+    if ($paramValue!=null && $paramValue!="" && $localeHandlerInstance ->validateLocale($paramValue)) {
+        $_SESSION["lang"] = $paramValue;
+    }
+    return $response->withRedirect($paramValueWayBack."/");
+});
+
 $app->post('/recvbarcode[/]', function(Request $request, Response $response, array $args){
     $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
     
@@ -57,6 +85,7 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
 });
+
 $app->get('/list[/]', function(Request $request, Response $response, array $args){
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
@@ -65,7 +94,8 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     $rawscanTimeValues = $dbInstance->listAllScanTime();
     return $this->view->render($response, "listbarcode.twig",["scanlist"=>$rawscanTimeValues]);
 });
-$app->get('/barcodes-list[/]', function(Request $request, Response $response, array $args){
+
+$app->get('/registeredbarcodes[/]', function(Request $request, Response $response, array $args){
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
@@ -73,6 +103,7 @@ $app->get('/barcodes-list[/]', function(Request $request, Response $response, ar
     $barcodeslist = $dbInstance->listAllBarcodes();
     return $this->view->render($response, "registeredbarcodes.twig",["registeredinfo"=>$barcodeslist]);
 });
+
 $app->post('/newbarcode[/]', function(Request $request, Response $response, array $args){
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
@@ -91,6 +122,8 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
 });
+
+
 $app->run();
 
 ?>

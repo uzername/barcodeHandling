@@ -25,6 +25,8 @@
                         //alert(XHR.responseText);
                         var rawresponse = JSON.parse(XHR.responseText);
                         console.log(rawresponse);
+                        //add here barcode to list
+                        
                     }                    
                 };
                 XHR.setRequestHeader('Content-Type', 'application/json');
@@ -55,7 +57,7 @@
                 {% else %}
                 <td> ----- </td>
                 {% endif %}
-                <td>{{ singlescan.RAWBARCODEREGISTERED|default('-----')|e }}</td>
+                <td>{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</td>
             </tr>
             {% endfor %}
         </table>

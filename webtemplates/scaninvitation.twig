@@ -5,6 +5,21 @@
         <link type="text/css" rel="stylesheet" href="../webtemplatesresources/main.css" >
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript" src="../webtemplatesresources/scannerhandler/jquery.scannerdetection.js"> </script>
+        <script type="text/javascript"> 
+             function messageHandler() {
+                 var coordinateHorizontal=0; 
+                 var tmp_messageShown = 0;
+                 this.renderMessage = function(in_text, in_timeShowSeconds) {
+                     if (tmp_messageShown == 0) {
+                         $("#div-scanmain").append("<div class=\"div-scanresult\"> </div>");
+                     } else {
+                         tmp_messageShown = 1;
+                     }
+                     $("div.div-scanresult").text(in_text);
+                 }
+             }
+             var messageHandlerInstance = new messageHandler();
+        </script>
         <script type="text/javascript">
             //send obtained data to server by XHR
             function processBarcode(in_stringBarcodeToProcess) {
@@ -25,7 +40,15 @@
                     if (XHR.status != 200) {
                         alert(XHR.status + ': ' + XHR.statusText);
                     } else {
-                        alert(XHR.responseText);
+                        //alert(XHR.responseText);
+                        var obtainedSuccessResponse = JSON.parse(XHR.responseText);
+                        console.log(obtainedSuccessResponse);
+                        console.log(obtainedSuccessResponse[0].status);
+                        if (obtainedSuccessResponse[0].status==="OK") {
+                            console.log("here");
+                            messageHandlerInstance.renderMessage("OK",0);
+                        }
+                        
                     }                    
                 };
                 XHR.setRequestHeader('Content-Type', 'application/json');
@@ -58,7 +81,30 @@
         <!-- detect barcode scanner input with http://a.kabachnik.info/jquery-scannerdetection-tutorial.html -->
         <!-- https://github.com/kabachello/jQuery-Scanner-Detection -->
         <div id="div-scanmain">
-            <div style="width:100%;text-align: right"> <a href="/list">[list]</a> </div>
+            <!-- top panel -->
+            <div style="width:100%;text-align: right"> 
+                <div id="div-languages">  
+                    {% if lang is defined %}
+                    
+                    {% if lang == "en" %}
+                        <span id="en" >[en]</span>
+                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
+                    {% elseif lang == "ru" %}
+                        <a href="/changelanguage?newlang=en&wayback={{wayback}}" id="en">[en]</a>
+                        <span id="ru" >[ru]</span>
+                    {% else %}
+                        lang: {{lang}}
+                    {% endif %}
+                    
+                    {% else %}
+                        <span id="en" >[en]</span>
+                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
+                    {% endif %}
+                </div>
+                <a href="/list"> {{localizedmessages['scannedlist']|default('[list]')}} </a>
+                <a href="/registeredbarcodes"> {{localizedmessages['registeredlist']|default('[Registered]')}} </a>
+            </div>
+            
             <div class="div-scanplease"> {{ localizedmessages['invitation']|default('Scan some barcode!')|e }} </div>
             <div id="div-clickhere"> {{ localizedmessages['invitationclick']|default('[or click here to show form and type in data with keypad]')|e }} </div>
             <div id="div-inputfield"> 

@@ -14,7 +14,14 @@
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         <table>
-            
+            <thead> 
+                <tr> 
+                    <th>&nbsp;</th> 
+                    <th> {{localizedmessages['knownbarcode_id_header']|default('known barcode id')}} </th> 
+                    <th> {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
+                    <th> {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
+                </tr>
+            </thead>
             {% for singlescan in scanlist %}
             <tr> 
                 <td>{{ singlescan.ID|default('-----')|e }}</td>

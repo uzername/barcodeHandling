@@ -3,6 +3,14 @@
     height:100%;
     background-color:lightgray;
     padding:1px;
+    position: relative;
+}
+.div-scanresult {
+    width: 200px;
+    position:absolute;
+    background-color: lightslategrey;
+    color: white; font-family: monospace;
+    right:0;
 }
 body {
     margin:0; padding:0;
@@ -21,6 +29,7 @@ body {
 #div-clickhere {
     width:75%; cursor: pointer;
     text-align: center;
+    padding-top: 10pt;
     margin-left: auto; margin-right: auto;
     font-size: 12pt;
     font-family: monospace;
@@ -32,6 +41,9 @@ body {
     padding-top:10px;
     width:40%;
     margin-left: auto; margin-right: auto;
+}
+#div-languages {
+    font-family: monospace; font-weight: bold; font-size: 10pt;
 }
 input#manualentry {
     width:65%;
