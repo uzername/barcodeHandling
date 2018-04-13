@@ -95,6 +95,11 @@
                         processEntry( processableEntry );
                         } );
                 });
+                $("printbtn").click( function() { //print out the list items
+                    var collectionIDs = $(".printcheckbox");
+                    var jsonBODY = JSON.stringify(o1);
+                    XHR.open("POST", "/printpage", true);
+                } );
                 $(document).on('change',"#newcode-barcodetypes",
                  function() {
                      barcodeCurrentlySelected = $(this).val();
@@ -160,6 +165,7 @@
             <input type="button" value="[>>>]" name="newcodebtn" id="newcodebtn">
         </form>
         </div>
+                <input type="button" name="printbtn" id="printbtn" value="{{registeredlistprint}}"> <br/>
         <table id = "table-registereditems">
             {% for singleregistration in registeredinfo %}
             <tr> 
