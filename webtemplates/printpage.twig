@@ -1,0 +1,28 @@
+<html>
+    <head> 
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <link rel="stylesheet" type="text/css" href="../webtemplatesresources/printpage"
+    </head>
+    <body>
+        <div id="printarea">
+            {% set odditycounter = 1 %}
+            {% for singleregistration in renderlist %}
+                {% if (odditycounter == 1) %}
+                    <div style="width:100%">
+                    <div id="printsectionleft">
+                    {{ singleregistration.FIELD1|default('-----')|e }} {{ singleregistration.FIELD2|default('-----')|e }} {{ singleregistration.FIELD3|default('-----')|e }}
+                    <br>
+                    <img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" />
+                    <div> {{ singleregistration.RAWBARCODEREGISTERED }} </div>
+                    </div>
+                    {% set odditycounter = 2 %}
+                {%else%}
+                    {% set odditycounter = 1 %}
+                    </div>
+                {% endif %}
+                
+            {% endfor %}
+        </div>
+    </body>
+</html>

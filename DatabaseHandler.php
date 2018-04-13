@@ -70,4 +70,19 @@ class DataBaseHandler {
             return $row['seq'];
         }
     }
+    public function listAllSelectedBarcodes($in_BarcodesList) {
+        // https://phpdelusions.net/pdo#in
+        $arr = $in_BarcodesList;
+        $in  = str_repeat('?,', count($arr) - 1) . '?';
+        $sql = "SELECT * FROM table WHERE column IN ($in)";
+        $stmt = $this->pdoInstance->prepare($sql);
+        $stmt->execute($arr);
+        $allScan=[];        
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $allScan[] = (object)['ID'=>$row['ID'], 'PATHTOBARCODE'=>$row['PATHTOBARCODE'], 'RAWBARCODEREGISTERED'=>$row['RAWBARCODEREGISTERED'],
+                'FIELD1'=>$row['FIELD1'], 'FIELD2'=>$row['FIELD2'], 'FIELD3'=>$row['FIELD3'], 'BARCODETYPE'=>$row['BARCODETYPE'] ];
+            
+        }
+        return $allScan;
+    }
 }

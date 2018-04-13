@@ -128,10 +128,10 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
     
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
      //how should we refer to this image on site
-     $subpathToBarcode = "/data/barcodes/".$body->{'newbarcode'}.$localtime->format('Ymd_His').".png";
+     $subpathToBarcode = "/data/barcodes/".$body->{'newbarcode'}."_".$localtime->format('Ymd_His')."_".$body->{'barcodetype'}.".svg";
      //how we should refr to this image on disk
      $pathToBarcode = __DIR__.$subpathToBarcode;
-     $generator = new \Picqer\Barcode\BarcodeGeneratorPNG();
+     $generator = new \Picqer\Barcode\BarcodeGeneratorSVG();
      $generatedBytes = $generator->getBarcode($body->{'newbarcode'}, ($body->{'barcodetype'} == "CODE128")?"C128":$body->{'barcodetype'},1,125);
      file_put_contents($pathToBarcode, $generatedBytes);
      
@@ -147,7 +147,16 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
     return $newResponse;
 });
 
-
+$app->post('/printpage', function(Request $request, Response $response, array $args){
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    $barcodeslist = $dbInstance->listAllSelectedBarcodes();
+    $templateTransmission["registeredinfo"] = $barcodeslist;
+    return $this->view->render($response, "printpage.twig", $templateTransmission);
+});
 $app->run();
 
 ?>

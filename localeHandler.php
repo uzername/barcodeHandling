@@ -19,12 +19,13 @@ class localeHandler {
             "registeredlistcaption"=>"[List of Registered Barcodes]",
             "registeredlistnewitemdescrean13"=>"Contains 13 digits (12 usable digits + 1 check digit);",
             "registeredlistnewitemdescrean8" => "Contains 7 usable digits + 1 check digit",
-            "registeredlistnewitemdescrcode128"=>"Contains up to 15 characters - latin letters, digits",
+            "registeredlistnewitemdescrcode128"=>"Contains up to 15-20 characters - latin letters, digits",
             "ncodefield1"=>'Field 1',
             "ncodefield2"=>'Field 2',
             "ncodefield3"=>'Field 3',
             "ncodebarcode"=>'Barcode Data',
             "ncodebarcodetype"=>'Barcode Type',
+            "registeredlistprint"=>"Print Selected"
             ]
         ),
     "ru" => array(
@@ -41,13 +42,13 @@ class localeHandler {
             "registeredlistcaption"=>"[Список зарегистрированных элементов]",
             "registeredlistnewitemdescrean13"=>"Содержит всего 13 цифр (необходимо ввести 12 цифр. 1 цифра - контрольная);",
             "registeredlistnewitemdescrean8"=>"Содержит всего 8 цифр (необходимо ввести 7 цифр. 1 цифра - контрольная);",
-            "registeredlistnewitemdescrcode128"=>"Содержит (желательно) до 15 символов - латинских букв, цифр",
+            "registeredlistnewitemdescrcode128"=>"Содержит (желательно) до 15-20 символов - латинских букв, цифр",
             "ncodefield1"=>'Поле 1',
             "ncodefield2"=>'Поле 2',
             "ncodefield3"=>'Поле 3',
             "ncodebarcode"=>'Данные в штрихкоде',
             "ncodebarcodetype"=>'Тип штрихкода',
-            
+            "registeredlistprint"=>"Распечатать отмеченные"
             ]
         )
     ];

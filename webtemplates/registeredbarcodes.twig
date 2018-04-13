@@ -163,7 +163,11 @@
         <table id = "table-registereditems">
             {% for singleregistration in registeredinfo %}
             <tr> 
-                <td>{{ singleregistration.ID|default('-----')|e }}</td>
+                <td>{{ singleregistration.ID|default('-----')|e }} <br>
+                {% if singleregistration.ID is not empty %}
+                    <input type="checkbox" name="ID{{singleregistration.ID}}" id="checkbox_ID{{singleregistration.ID}}" class="printcheckbox">
+                {% endif %}
+                </td>
                 {% if singleregistration.PATHTOBARCODE is not empty %}
                 <td><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
                 {% else %}
