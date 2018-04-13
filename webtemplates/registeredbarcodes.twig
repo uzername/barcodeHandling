@@ -97,8 +97,20 @@
                 });
                 $("printbtn").click( function() { //print out the list items
                     var collectionIDs = $(".printcheckbox");
-                    var jsonBODY = JSON.stringify(o1);
+                    var jsonBODY = JSON.stringify(collectionIDs);
+                    var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
                     XHR.open("POST", "/printpage", true);
+                    XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                        if (XHR.status != 200) {
+                            alert(XHR.status + ': ' + XHR.statusText);
+                        } else {
+
+                        }
+                    };
+                    
+                    XHR.setRequestHeader('Content-Type', 'application/json');
+                    XHR.send(jsonBODY);
                 } );
                 $(document).on('change',"#newcode-barcodetypes",
                  function() {
