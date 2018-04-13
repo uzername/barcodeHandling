@@ -2,19 +2,52 @@
     <head>
         <meta charset="UTF8">
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <link type="text/css" rel="stylesheet" href="../webtemplatesresources/commonbar.css" >
+        <link type="text/css" rel="stylesheet" href="../webtemplatesresources/registeredcodes.css" >
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript">
+            var descrArray = [];
+            var barcodeValueValid = false;
+            var barcodeCurrentlySelected = "empty";
+            
+            function validateCodeInput(in_currentValueBarcode, in_selectedBarcodeType) {
+                var re = "";
+                
+                switch (in_selectedBarcodeType) {
+                    case "EAN8": {
+                        re = /\d\d\d\d\d\d\d/;
+                        break;
+                    }
+                    case "EAN13": {
+                        re = /\d\d\d\d\d\d\d\d\d\d\d\d/;
+                        break;
+                    }
+                    case "CODE128": {
+                        re = /[a-z0-9]+/;
+                        break;
+                    }
+                    default: {
+                            return false;
+                    }
+                }
+                
+                return re.test(in_currentValueBarcode);
+            }
+            
             function processEntry(in_stringEntryToProcess) {
                 // https://learn.javascript.ru/ajax-xmlhttprequest
                 // https://learn.javascript.ru/xhr-forms
                 // https://learn.javascript.ru/ajax
-                var stringContent = in_stringEntryToProcess;
+                var stringContent = in_stringEntryToProcess["rawcode"];
+                console.log(in_stringEntryToProcess);
                 if (stringContent === "") {return;}
                 var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
                 
-                var o1 = { newbarcode: "" }; 
+                var o1 = { newbarcode: "", codetype: "", fldinput1: "", fldinput2: "", fldinput3: ""}; 
                 //remove non-printable ASCII characters, just to be sure
-                o1.newbarcode = stringContent;
+                o1.newbarcode = stringContent; o1.barcodetype = in_stringEntryToProcess["codetype"]; 
+                o1.fldinput1 = in_stringEntryToProcess["fldinput1"]; o1.fldinput2 = in_stringEntryToProcess["fldinput2"]; o1.fldinput3 = in_stringEntryToProcess["fldinput3"]; 
+                
                 var jsonbody = JSON.stringify(o1);
                 XHR.open("POST", "/newbarcode", true);
                 XHR.onreadystatechange = function() {
@@ -25,12 +58,18 @@
                         //alert(XHR.responseText);
                         var rawresponse = JSON.parse(XHR.responseText);
                         // add here barcode to list
+                        console.log(rawresponse[0]);
                         if (rawresponse[0].status==="OK") {
                             var $newrow = $("<tr> </tr>");
-                            $newrow.append("<td> ----- </td>");
-                            $newrow.append("<td> "+rawresponse[0].addedfilepath+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.ID+" </td>");
                             $newrow.append("<td> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
-                            $("table").append($newrow);
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput1+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput2+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput3+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.barcodetype+" </td>");
+                            
+                            $("table#table-registereditems").prepend($newrow);
                         }
                     }                    
                 };
@@ -38,31 +77,103 @@
                 XHR.send(jsonbody);
             }
             $(document).ready(function() {
-
+                descrArray['EAN8']="{{localizedmessages["registeredlistnewitemdescrean8"]}}";
+                descrArray['EAN13']="{{localizedmessages["registeredlistnewitemdescrean13"]}}";
+                descrArray['CODE128']="{{localizedmessages["registeredlistnewitemdescrcode128"]}}";
+                
                 $("#newcodebtn").click( //handler for button inside input form
                     function() {
-                        processEntry( $("#newcodeinput").val() );
+                        if (barcodeValueValid === false) {
+                            return;
+                        }
+                        var processableEntry = [];
+                        processableEntry["rawcode"] = $("#newcodeinput").val();
+                        processableEntry["codetype"] = $("#newcode-barcodetypes").val();
+                        processableEntry["fldinput1"] = $("#fldinput1").val();
+                        processableEntry["fldinput2"] = $("#fldinput2").val();
+                        processableEntry["fldinput3"] = $("#fldinput3").val();
+                        processEntry( processableEntry );
                         } );
+                });
+                $(document).on('change',"#newcode-barcodetypes",
+                 function() {
+                     barcodeCurrentlySelected = $(this).val();
+                    if ($(this).val() === 'empty') { $("#div-newcode-barcodedescr").text(" "); }
+                    $("#div-newcode-barcodedescr").text( descrArray[$(this).val()] );
+                    
+                    barcodeValueValid = validateCodeInput($("#newcodeinput").val(),barcodeCurrentlySelected);
+                    console.log(barcodeValueValid);
+                    if (barcodeValueValid === false) {
+                                  $("#newcodeinput").addClass("red-border");
+                                  $("#newcodeinput").focus();
+                    } else {
+                        $("#newcodeinput").removeClass("red-border");
+                    }
+                    
+                });
+                //validate input
+                $(document).on('keyup',"#newcodeinput",
+                 function(){ 
+                    barcodeValueValid = validateCodeInput($(this).val(),barcodeCurrentlySelected);
+                    console.log(barcodeValueValid);
+                    if (barcodeValueValid === false) {
+                                  $(this).addClass("red-border");
+                                  $(this).focus();
+                    } else {
+                        $(this).removeClass("red-border");
+                    }
                 });
         </script>
     </head>
     <body>
+        {% include 'commonbar.twig' %}
+        <div id="div-newcodecommon">
         <form>
-            <input type="text" name="newcodeinput" id="newcodeinput">
-            
+            <div style="width:100%" class="clearfix"> 
+                <div class="div-newcodecolN1">{{ localizedmessages['ncodefield1']|default('Field 1')|e }}</div> 
+                <div class="div-newcodecolN2"> <input type="text" name="fldinput1" id="fldinput1"> </div>
+            </div>
+            <div style="width:100%" class="clearfix">
+                <div class="div-newcodecolN1">{{ localizedmessages['ncodefield2']|default('Field 2')|e }}</div> 
+                <div class="div-newcodecolN2"> <input type="text" name="fldinput2" id="fldinput2"> </div>
+            </div>
+            <div style="width:100%" class="clearfix">
+                <div class="div-newcodecolN1">{{ localizedmessages['ncodefield3']|default('Field 3')|e }}</div> 
+                <div class="div-newcodecolN2"> <input type="text" name="fldinput3" id="fldinput3"> </div>
+            </div>
+            <div style="width:100%" class="clearfix">
+                <div class="div-newcodecolN1">{{ localizedmessages['ncodebarcode']|default('Barcode Data')|e }}</div> 
+                <div class="div-newcodecolN2"> <input type="text" name="newcodeinput" id="newcodeinput">  </div>
+            </div>
+            <div style="width:100%" class="clearfix">
+                <div class="div-newcodecolN1">{{ localizedmessages['ncodebarcodetype']|default('Barcode Type')|e }}</div>
+                <div class="div-newcodecolN2"> 
+                    <select name="barcodetypes" id="newcode-barcodetypes"> <option value="empty"> </option> <option value="EAN13">EAN13</option> 
+                        <option value="EAN8">EAN8</option> <option value="CODE128">CODE128</option> </select> </div>
+            </div>
+            <div style="width:100%" id="div-newcode-barcodedescr"> 
+                
+            </div>
+            <div style="width:100%" id="div-newcode-barcodewarning"> 
+                
+            </div>
             <input type="button" value="[>>>]" name="newcodebtn" id="newcodebtn">
         </form>
-        <table>
+        </div>
+        <table id = "table-registereditems">
             {% for singleregistration in registeredinfo %}
             <tr> 
                 <td>{{ singleregistration.ID|default('-----')|e }}</td>
-                <td>{{ singleregistration.PATHTOBARCODE|default('-----')|e }}</td>
                 {% if singleregistration.PATHTOBARCODE is not empty %}
                 <td><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
                 {% else %}
                 <td> ----- </td>
                 {% endif %}
                 <td>{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</td>
+                <td>{{ singleregistration.FIELD1|default('-----')|e }}</td>
+                <td>{{ singleregistration.FIELD2|default('-----')|e }}</td>
+                <td>{{ singleregistration.FIELD3|default('-----')|e }}</td>
+                <td>{{ singleregistration.BARCODETYPE|default('-----')|e }}</td>
             </tr>
             {% endfor %}
         </table>

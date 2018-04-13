@@ -1,0 +1,22 @@
+            <div style="width:100%;text-align: right"> 
+                <div id="div-languages">  
+                    {% if lang is defined %}
+                    
+                    {% if lang == "en" %}
+                        <span id="en" >[en]</span>
+                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
+                    {% elseif lang == "ru" %}
+                        <a href="/changelanguage?newlang=en&wayback={{wayback}}" id="en">[en]</a>
+                        <span id="ru" >[ru]</span>
+                    {% else %}
+                        lang: {{lang}}
+                    {% endif %}
+                    
+                    {% else %}
+                        <span id="en" >[en]</span>
+                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
+                    {% endif %}
+                </div>
+                <a href="/list"> {{localizedmessages['scannedlist']|default('[list]')}} </a>
+                <a href="/registeredbarcodes"> {{localizedmessages['registeredlist']|default('[Registered]')}} </a>
+            </div>

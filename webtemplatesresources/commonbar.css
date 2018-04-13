@@ -1,0 +1,11 @@
+#div-languages {
+    font-family: monospace; font-weight: bold; font-size: 10pt; background-color: white;
+}
+body {
+    margin:0; padding:0;
+}
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}

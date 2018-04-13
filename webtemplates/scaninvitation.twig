@@ -3,6 +3,7 @@
         <meta charset="UTF8">
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
         <link type="text/css" rel="stylesheet" href="../webtemplatesresources/main.css" >
+        <link type="text/css" rel="stylesheet" href="../webtemplatesresources/commonbar.css" >
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript" src="../webtemplatesresources/scannerhandler/jquery.scannerdetection.js"> </script>
         <script type="text/javascript"> 
@@ -81,28 +82,7 @@
         <!-- https://github.com/kabachello/jQuery-Scanner-Detection -->
         <div id="div-scanmain">
             <!-- top panel -->
-            <div style="width:100%;text-align: right"> 
-                <div id="div-languages">  
-                    {% if lang is defined %}
-                    
-                    {% if lang == "en" %}
-                        <span id="en" >[en]</span>
-                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
-                    {% elseif lang == "ru" %}
-                        <a href="/changelanguage?newlang=en&wayback={{wayback}}" id="en">[en]</a>
-                        <span id="ru" >[ru]</span>
-                    {% else %}
-                        lang: {{lang}}
-                    {% endif %}
-                    
-                    {% else %}
-                        <span id="en" >[en]</span>
-                        <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
-                    {% endif %}
-                </div>
-                <a href="/list"> {{localizedmessages['scannedlist']|default('[list]')}} </a>
-                <a href="/registeredbarcodes"> {{localizedmessages['registeredlist']|default('[Registered]')}} </a>
-            </div>
+            {% include 'commonbar.twig' %}
             
             <div class="div-scanplease"> {{ localizedmessages['invitation']|default('Scan some barcode!')|e }} </div>
             <div id="div-clickhere"> {{ localizedmessages['invitationclick']|default('[or click here to show form and type in data with keypad]')|e }} </div>

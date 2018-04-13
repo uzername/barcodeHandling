@@ -96,12 +96,27 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
 });
 
 $app->get('/registeredbarcodes[/]', function(Request $request, Response $response, array $args){
+    session_start();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
+    $templateTransmission = [];
+    $templateTransmission['wayback'] = "/registeredbarcodes";
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    }
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $registeredCodesSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-registeredbarcodes");
     $barcodeslist = $dbInstance->listAllBarcodes();
-    return $this->view->render($response, "registeredbarcodes.twig",["registeredinfo"=>$barcodeslist]);
+    $templateTransmission["registeredinfo"] = $barcodeslist;
+    $templateTransmission["localizedmessages"] = $commonsubarray+$registeredCodesSubarray;
+
+    return $this->view->render($response, "registeredbarcodes.twig", $templateTransmission);
 });
 
 $app->post('/newbarcode[/]', function(Request $request, Response $response, array $args){
@@ -110,14 +125,23 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = json_decode( $request->getBody()->getContents() );
+    
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+     //how should we refer to this image on site
      $subpathToBarcode = "/data/barcodes/".$body->{'newbarcode'}.$localtime->format('Ymd_His').".png";
+     //how we should refr to this image on disk
      $pathToBarcode = __DIR__.$subpathToBarcode;
      $generator = new \Picqer\Barcode\BarcodeGeneratorPNG();
-     $generatedBytes = $generator->getBarcode($body->{'newbarcode'}, $generator::TYPE_CODE_128);
+     $generatedBytes = $generator->getBarcode($body->{'newbarcode'}, ($body->{'barcodetype'} == "CODE128")?"C128":$body->{'barcodetype'},1,125);
      file_put_contents($pathToBarcode, $generatedBytes);
-    $dbInstance->saveCodeEntry($body->{'newbarcode'}, $subpathToBarcode);
-    $data = array(['status' => 'OK', 'addedfilepath'=>$request->getUri()->getBasePath().$subpathToBarcode]);
+     
+    $dbInstance->saveCodeEntry($body->{'newbarcode'}, $subpathToBarcode, $body->{'fldinput1'}, $body->{'fldinput2'}, $body->{'fldinput3'}, $body->{'barcodetype'});
+    $latestBarcodeID = $dbInstance->getLatestBarcodeAdded();
+    $data = array(['status' => 'OK', 'addedfilepath'=>$request->getUri()->getBasePath().$subpathToBarcode, 
+        'backtrackdata'=>[ 
+            'fldinput1'=>$body->{'fldinput1'}, 'fldinput2'=>$body->{'fldinput2'}, 'fldinput3'=>$body->{'fldinput3'}, 
+            'barcodetype'=>$body->{'barcodetype'}, 'newbarcode'=>$body->{'newbarcode'}, 'ID'=>$latestBarcodeID ] ]);
+    
     $newResponse = $response;
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;

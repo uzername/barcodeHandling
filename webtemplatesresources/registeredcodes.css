@@ -1,0 +1,19 @@
+div#div-newcodecommon {
+    width:50%;
+    margin-left: auto; margin-right: auto;
+}
+div.div-newcodecolN1 {
+    float:left;
+    width:35%
+}
+div.div-newcodecolN2 {
+    float:right;
+    width:65%
+}
+div#div-newcode-barcodedescr {
+    color: green;
+    font-family: monospace; font-size:10pt;
+}
+.red-border{
+    border: 2px solid red;
+}
