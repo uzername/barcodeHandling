@@ -152,8 +152,10 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
+    $body = json_decode( $request->getBody()->getContents() );
+    
     $templateTransmission = [];
-    $barcodeslist = $dbInstance->listAllSelectedBarcodes();
+    $barcodeslist = $dbInstance->listAllSelectedBarcodes($body->{'barcodeslist'});
     $templateTransmission["registeredinfo"] = $barcodeslist;
     return $this->view->render($response, "printpage.twig", $templateTransmission);
 });

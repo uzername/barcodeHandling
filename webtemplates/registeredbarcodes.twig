@@ -94,11 +94,17 @@
                         processableEntry["fldinput3"] = $("#fldinput3").val();
                         processEntry( processableEntry );
                         } );
-                });
-                $("printbtn").click( function() { //print out the list items
-                    var collectionIDs = $(".printcheckbox");
-                    var jsonBODY = JSON.stringify(collectionIDs);
+                     
+                $("#printbtn").click( function() { //print out the selected list items in nice format
+                    var collectionIDs = $(".printcheckbox"); var jsonBODY = [];
+                    collectionIDs.each( function() {
+                        jsonBODY.push(this.getAttribute("data-identifier"));
+                    } );
+                    
                     var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                    console.log(jsonBODY);
+                     var o1 = { barcodeslist: "" }; 
+                     o1.barcodeslist = jsonBODY;
                     XHR.open("POST", "/printpage", true);
                     XHR.onreadystatechange = function() {
                     if (XHR.readyState != 4) return;
@@ -112,6 +118,9 @@
                     XHR.setRequestHeader('Content-Type', 'application/json');
                     XHR.send(jsonBODY);
                 } );
+                        
+                });
+
                 $(document).on('change',"#newcode-barcodetypes",
                  function() {
                      barcodeCurrentlySelected = $(this).val();
@@ -166,7 +175,7 @@
                 <div class="div-newcodecolN1">{{ localizedmessages['ncodebarcodetype']|default('Barcode Type')|e }}</div>
                 <div class="div-newcodecolN2"> 
                     <select name="barcodetypes" id="newcode-barcodetypes"> <option value="empty"> </option> <option value="EAN13">EAN13</option> 
-                        <option value="EAN8">EAN8</option> <option value="CODE128">CODE128</option> </select> </div>
+                        <option value="EAN8">EAN8</option> <option value="CODE128" selected>CODE128</option> </select> </div>
             </div>
             <div style="width:100%" id="div-newcode-barcodedescr"> 
                 
@@ -177,13 +186,15 @@
             <input type="button" value="[>>>]" name="newcodebtn" id="newcodebtn">
         </form>
         </div>
-                <input type="button" name="printbtn" id="printbtn" value="{{registeredlistprint}}"> <br/>
+                {% if  registeredinfo|length > 0 %}
+                <input type="button" name="printbtn" id="printbtn" value="{{ localizedmessages['registeredlistprint'] }}"> <br/>
+                {%endif%}
         <table id = "table-registereditems">
             {% for singleregistration in registeredinfo %}
             <tr> 
                 <td>{{ singleregistration.ID|default('-----')|e }} <br>
                 {% if singleregistration.ID is not empty %}
-                    <input type="checkbox" name="ID{{singleregistration.ID}}" id="checkbox_ID{{singleregistration.ID}}" class="printcheckbox">
+                    <input type="checkbox" name="checkbox_Name{{singleregistration.ID}}" id="checkbox_ID{{singleregistration.ID}}" class="printcheckbox" data-identifier="{{singleregistration.ID}}">
                 {% endif %}
                 </td>
                 {% if singleregistration.PATHTOBARCODE is not empty %}
