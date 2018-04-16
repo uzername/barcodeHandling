@@ -13,7 +13,8 @@ class localeHandler {
         "page-main"=>[
             "invitation"=>"Scan some barcode!",
             "invitationclick"=>"[or click here to show form and type in data with keypad]",
-
+            "invitationcodenotfound"=>"This barcode is not found in database",
+            "invitationokresult"=>"Scanned!"
             ],
         "page-registeredbarcodes"=>[
             "registeredlistcaption"=>"[List of Registered Barcodes]",
@@ -27,7 +28,8 @@ class localeHandler {
             "ncodebarcodetype"=>'Barcode Type', //used in table too
             "registeredlistprint"=>"Print Selected", //used in table too
             "registeredlistbarcodecapt"=>"Barcode", //used in table too
-            "registeredlistnoitemstoprint"=>"No items selected"
+            "registeredlistnoitemstoprint"=>"No items selected",
+            "registeredlistalreadyexist"=>"Item Already Exist",
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -41,7 +43,8 @@ class localeHandler {
         "page-main"=>[
             "invitation"=>"Отсканируйте штрихкод!",
             "invitationclick"=>"[Или нажмите здесь чтобы показать строчку и набрать самому (если сканер штрихкодов не работает)]",
-
+            "invitationcodenotfound"=>"Этого штрихкода нету в базе",
+            "invitationokresult"=>"Отсканировано!"
             ],
         "page-registeredbarcodes"=>[
             "registeredlistcaption"=>"[Список зарегистрированных элементов]",
@@ -55,7 +58,9 @@ class localeHandler {
             "ncodebarcodetype"=>'Тип штрихкода', //used in table too
             "registeredlistprint"=>"Распечатать отмеченные", //used in table too
             "registeredlistbarcodecapt" => "Штрихкод", //used in table too
-            "registeredlistnoitemstoprint"=>"Ничего не выбрано для печати"
+            "registeredlistnoitemstoprint"=>"Ничего не выбрано для печати",
+            "registeredlistalreadyexist"=>"Такой штрихкод уже существует",
+            
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"

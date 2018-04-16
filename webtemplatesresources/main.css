@@ -11,6 +11,19 @@
     background-color: lightslategrey;
     color: white; font-family: monospace;
     right:0;
+    z-index: 2;
+}
+
+.div-scanresult1 {
+    width:100%;
+    background-color: lavender;
+}
+div#toggle-scanresult {
+    top: 50px;
+    display: none;
+}
+.div-scanresult2 {
+    width:100%;
 }
 
 .div-scanplease {

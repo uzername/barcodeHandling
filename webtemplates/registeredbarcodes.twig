@@ -12,7 +12,7 @@
             
             function validateCodeInput(in_currentValueBarcode, in_selectedBarcodeType) {
                 var re = "";
-                
+
                 switch (in_selectedBarcodeType) {
                     case "EAN8": {
                         re = /\d\d\d\d\d\d\d/;
@@ -33,7 +33,7 @@
                 
                 return re.test(in_currentValueBarcode);
             }
-            // subroutine which is used to add new entry
+            // subroutine which is used to send XHR to add new entry
             function processEntry(in_stringEntryToProcess) {
                 // https://learn.javascript.ru/ajax-xmlhttprequest
                 // https://learn.javascript.ru/xhr-forms
@@ -72,6 +72,16 @@
                             $newrow.append("<td> "+rawresponse[0].backtrackdata.barcodetype+" </td>");
                             
                             $("table#table-registereditems").prepend($newrow);
+                        } else {
+                            switch (rawresponse[0].status) {
+                                case "FAIL_ALREADYEXIST": {
+                                        alert("{{localizedmessages["registeredlistalreadyexist"]}}");
+                                        break;
+                                }
+                                default: {
+                                        break;
+                                }
+                            }
                         }
                     }                    
                 };
@@ -107,7 +117,7 @@
                             jsonBODY.push(this.getAttribute("data-identifier")); 
                     } );
                     if (jsonBODY.length <= 0) {
-                        alert({{localizedmessages["registeredlistnoitemstoprint"]}});
+                        alert("{{localizedmessages["registeredlistnoitemstoprint"]}}");
                         return;
                     }
                     var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");

@@ -79,6 +79,12 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = json_decode( $request->getBody()->getContents() );
+    if ($dbInstance->checkExistenceBarcodeByData( $body->{'scannedbarcode'} )==0) {
+        $data = array(['status' => 'FAIL_NOTALREADYEXIST' ]);
+        $newResponse = $response;
+    $newResponse = $newResponse->withJson($data)->withStatus(200);
+    return $newResponse;
+    }
     $dbInstance->saveScanTime($body->{'scannedbarcode'}, $localtime->format('Y-m-d H:i:s'));
     $data = array(['status' => 'OK', 'time'=>($localtime->format('Y-m-d H:i:s'))]);
     $newResponse = $response;
@@ -125,7 +131,12 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = json_decode( $request->getBody()->getContents() );
-    
+    if ($dbInstance->checkExistenceBarcodeByData( $body->{'newbarcode'} )!=0) {
+        $data = array(['status' => 'FAIL_ALREADYEXIST']);
+        $newResponse = $response;
+        $newResponse = $newResponse->withJson($data)->withStatus(200);
+        return $newResponse;
+    }
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
      //how should we refer to this image on site
      $subpathToBarcode = "/data/barcodes/".$body->{'newbarcode'}."_".$localtime->format('Ymd_His')."_".$body->{'barcodetype'}.".svg";

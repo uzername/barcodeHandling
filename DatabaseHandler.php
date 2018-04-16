@@ -85,4 +85,12 @@ class DataBaseHandler {
         }
         return $allScan;
     }
+    public function checkExistenceBarcodeByData($in_InputBarcodeData) {
+        $stmt = $this->pdoInstance->prepare("SELECT COUNT(*) AS TOTALITEMS FROM ".$this->existingBarcodesTableName." WHERE (RAWBARCODEREGISTERED = :itm)");
+        $stmt->bindParam(":itm",$in_InputBarcodeData,PDO::PARAM_STR);
+        $stmt->execute();
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return $row["TOTALITEMS"];
+        }
+    }
 }

@@ -7,17 +7,17 @@
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript" src="../webtemplatesresources/scannerhandler/jquery.scannerdetection.js"> </script>
         <script type="text/javascript"> 
+             var globalMessageShown = 0;
              function messageHandler() {
                  var coordinateHorizontal=0; 
-                 var tmp_messageShown = 0;
+                 this.coordinateVertical = 50; 
                  this.renderMessage = function(in_text, in_timeShowSeconds) {
-                     if (tmp_messageShown == 0) {
-                         $("#div-scanmain").append("<div class=\"div-scanresult\"> </div>");
-                     } else {
-                         tmp_messageShown = 1;
-                     }
-                     $("div.div-scanresult").text(in_text);
-                 }
+                    if (globalMessageShown == 0) {                     
+                     $("#toggle-scanresult").toggle();
+                     globalMessageShown = 1;
+                    } 
+                    $("#scanresult-text").html(in_text);
+                 };
              }
              var messageHandlerInstance = new messageHandler();
         </script>
@@ -46,7 +46,20 @@
                        // console.log(obtainedSuccessResponse);
                        // console.log(obtainedSuccessResponse[0].status);
                         if (obtainedSuccessResponse[0].status==="OK") {
-                            messageHandlerInstance.renderMessage("OK",0);
+                            messageHandlerInstance.renderMessage("{{localizedmessages["invitationokresult"]}} <br> "+obtainedSuccessResponse[0].time,0);
+                            console.log(obtainedSuccessResponse);
+                        } else {
+                            switch (obtainedSuccessResponse[0].status) {
+                                case "FAIL_NOTALREADYEXIST": {
+                                        alert("{{localizedmessages["invitationcodenotfound"]}}");
+                                        break;
+                                }
+                                default: {
+                                        
+                                        break;
+                                }
+                            }
+                            return;
                         }
                         
                     }                    
@@ -63,6 +76,16 @@
                     function() {
                         processBarcode( $("#manualentry").val() );
                         } );
+                $("#toggle-scanresult").click(function() {
+                         console.log("hiding panel");
+                         globalMessageShown = 0;
+                         $("#toggle-scanresult").toggle();
+                }); 
+                $("#manualentry").keypress(function(e) {
+                        if(e.which == 13) {
+                            processBarcode( $("#manualentry").val() );
+                        }
+                    });
                 });
 
             $(document).scannerDetection({
@@ -90,6 +113,8 @@
                 <input type="text" name="manualinputfield" id="manualentry">
                 <input type="button" name="manualinputbutton" value=">>>" id="manualstart">
             </div>
+            <div class="div-scanresult" id="toggle-scanresult" > <div class="div-scanresult1" >&nbsp;</div> 
+                    <div class="div-scanresult2" id="scanresult-text"> </div> </div>
         </div>
     </body>
 </html>
