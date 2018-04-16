@@ -20,13 +20,18 @@ class localeHandler {
             "registeredlistnewitemdescrean13"=>"Contains 13 digits (12 usable digits + 1 check digit);",
             "registeredlistnewitemdescrean8" => "Contains 7 usable digits + 1 check digit",
             "registeredlistnewitemdescrcode128"=>"Contains up to 15-20 characters - latin letters, digits",
-            "ncodefield1"=>'Field 1',
-            "ncodefield2"=>'Field 2',
-            "ncodefield3"=>'Field 3',
-            "ncodebarcode"=>'Barcode Data',
-            "ncodebarcodetype"=>'Barcode Type',
-            "registeredlistprint"=>"Print Selected"
-            ]
+            "ncodefield1"=>'Field 1', //used in table too
+            "ncodefield2"=>'Field 2', //used in table too
+            "ncodefield3"=>'Field 3', //used in table too
+            "ncodebarcode"=>'Barcode Data', //used in table too
+            "ncodebarcodetype"=>'Barcode Type', //used in table too
+            "registeredlistprint"=>"Print Selected", //used in table too
+            "registeredlistbarcodecapt"=>"Barcode", //used in table too
+            "registeredlistnoitemstoprint"=>"No items selected"
+            ],
+        "page-printpage"=>[
+            "registeredlistprintwndcaption"=>"Barcode Printing"
+        ]
         ),
     "ru" => array(
         "common"=>["header"=>"SM_NM Сканнер",
@@ -43,13 +48,18 @@ class localeHandler {
             "registeredlistnewitemdescrean13"=>"Содержит всего 13 цифр (необходимо ввести 12 цифр. 1 цифра - контрольная);",
             "registeredlistnewitemdescrean8"=>"Содержит всего 8 цифр (необходимо ввести 7 цифр. 1 цифра - контрольная);",
             "registeredlistnewitemdescrcode128"=>"Содержит (желательно) до 15-20 символов - латинских букв, цифр",
-            "ncodefield1"=>'Поле 1',
-            "ncodefield2"=>'Поле 2',
-            "ncodefield3"=>'Поле 3',
-            "ncodebarcode"=>'Данные в штрихкоде',
-            "ncodebarcodetype"=>'Тип штрихкода',
-            "registeredlistprint"=>"Распечатать отмеченные"
-            ]
+            "ncodefield1"=>'Поле 1', //used in table too
+            "ncodefield2"=>'Поле 2', //used in table too
+            "ncodefield3"=>'Поле 3', //used in table too
+            "ncodebarcode"=>'Данные в штрихкоде', //used in table too
+            "ncodebarcodetype"=>'Тип штрихкода', //used in table too
+            "registeredlistprint"=>"Распечатать отмеченные", //used in table too
+            "registeredlistbarcodecapt" => "Штрихкод", //used in table too
+            "registeredlistnoitemstoprint"=>"Ничего не выбрано для печати"
+            ],
+        "page-printpage"=>[
+            "registeredlistprintwndcaption"=>"Печать штрихкодов"
+        ]
         )
     ];
 

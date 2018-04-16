@@ -74,7 +74,7 @@ class DataBaseHandler {
         // https://phpdelusions.net/pdo#in
         $arr = $in_BarcodesList;
         $in  = str_repeat('?,', count($arr) - 1) . '?';
-        $sql = "SELECT * FROM table WHERE column IN ($in)";
+        $sql = "SELECT * FROM ".$this->existingBarcodesTableName." WHERE ID IN ($in)";
         $stmt = $this->pdoInstance->prepare($sql);
         $stmt->execute($arr);
         $allScan=[];        

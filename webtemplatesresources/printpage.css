@@ -3,14 +3,26 @@ div#printarea {
     height: 29cm;
 }
 
-div#printsectionleft {
+div.printsectionleft {
     width: 50%;
+    font-family: monospace;
     border-right:black dashed 2px;
     border-bottom: black dashed 2px;
-    float: right;
 }
-div#printsectionright {
+div.printsectionright {
     width: 50%;
+    font-family: monospace;
     border-bottom: black dashed 2px;
+}
+div.printsection {
     float: left;
+    padding: 5px;
+    box-sizing: border-box;
+}
+div.namefield {
+    margin-bottom: 10px;
+}
+.imgfield {
+    margin-left: 20px;
+    margin-bottom: 10px;
 }

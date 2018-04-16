@@ -33,7 +33,7 @@
                 
                 return re.test(in_currentValueBarcode);
             }
-            
+            // subroutine which is used to add new entry
             function processEntry(in_stringEntryToProcess) {
                 // https://learn.javascript.ru/ajax-xmlhttprequest
                 // https://learn.javascript.ru/xhr-forms
@@ -61,7 +61,9 @@
                         console.log(rawresponse[0]);
                         if (rawresponse[0].status==="OK") {
                             var $newrow = $("<tr> </tr>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.ID+" </td>");
+                            $newrow.append("<td> "+rawresponse[0].backtrackdata.ID+"<br />"+
+                            "<input type=\"checkbox\" name=\"checkbox_Name"+rawresponse[0].backtrackdata.ID+"\" id=\"checkbox_ID"+rawresponse[0].backtrackdata.ID+"\" class=\"printcheckbox\" data-identifier=\""+rawresponse[0].backtrackdata.ID+"\">"
+                            +" </td>");
                             $newrow.append("<td> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
                             $newrow.append("<td> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
                             $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput1+" </td>");
@@ -81,6 +83,10 @@
                 descrArray['EAN13']="{{localizedmessages["registeredlistnewitemdescrean13"]}}";
                 descrArray['CODE128']="{{localizedmessages["registeredlistnewitemdescrcode128"]}}";
                 
+                $("#div-newcode-barcodedescr").text( descrArray['CODE128'] );
+                barcodeCurrentlySelected = "CODE128";
+                
+                
                 $("#newcodebtn").click( //handler for button inside input form
                     function() {
                         if (barcodeValueValid === false) {
@@ -95,28 +101,34 @@
                         processEntry( processableEntry );
                         } );
                      
-                $("#printbtn").click( function() { //print out the selected list items in nice format
-                    var collectionIDs = $(".printcheckbox"); var jsonBODY = [];
+                $("#printbtn").click( function() { //print out the selected list items in nice format Print Selected
+                    var collectionIDs = $(".printcheckbox:checked"); var jsonBODY = [];
                     collectionIDs.each( function() {
-                        jsonBODY.push(this.getAttribute("data-identifier"));
+                            jsonBODY.push(this.getAttribute("data-identifier")); 
                     } );
-                    
+                    if (jsonBODY.length <= 0) {
+                        alert({{localizedmessages["registeredlistnoitemstoprint"]}});
+                        return;
+                    }
                     var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
                     console.log(jsonBODY);
                      var o1 = { barcodeslist: "" }; 
                      o1.barcodeslist = jsonBODY;
+                     var jsonbody2 = JSON.stringify(o1);
                     XHR.open("POST", "/printpage", true);
                     XHR.onreadystatechange = function() {
                     if (XHR.readyState != 4) return;
                         if (XHR.status != 200) {
                             alert(XHR.status + ': ' + XHR.statusText);
                         } else {
-
+                            var w = window.open();
+                            $(w.document.body).html(XHR.response);
+                            //console.log(XHR);
                         }
                     };
                     
                     XHR.setRequestHeader('Content-Type', 'application/json');
-                    XHR.send(jsonBODY);
+                    XHR.send(jsonbody2);
                 } );
                         
                 });
@@ -190,6 +202,17 @@
                 <input type="button" name="printbtn" id="printbtn" value="{{ localizedmessages['registeredlistprint'] }}"> <br/>
                 {%endif%}
         <table id = "table-registereditems">
+            <thead>
+                <th>&nbsp;</th> 
+                <th> {{localizedmessages["registeredlistbarcodecapt"]}} </th>
+                <th> {{localizedmessages["ncodebarcode"]}} </th>
+                
+                <th> {{localizedmessages["ncodefield1"]}} </th>
+                <th> {{localizedmessages["ncodefield2"]}} </th>
+                <th> {{localizedmessages["ncodefield3"]}} </th>
+                
+                <th> {{localizedmessages["ncodebarcodetype"]}} </th>
+            </thead>
             {% for singleregistration in registeredinfo %}
             <tr> 
                 <td>{{ singleregistration.ID|default('-----')|e }} <br>

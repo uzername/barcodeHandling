@@ -154,9 +154,19 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     }
     $body = json_decode( $request->getBody()->getContents() );
     
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    }
+    $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-printpage");
+    
     $templateTransmission = [];
+    $templateTransmission["localizedlist"] = $langsubarray;
     $barcodeslist = $dbInstance->listAllSelectedBarcodes($body->{'barcodeslist'});
-    $templateTransmission["registeredinfo"] = $barcodeslist;
+    $templateTransmission["renderlist"] = $barcodeslist; $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
     return $this->view->render($response, "printpage.twig", $templateTransmission);
 });
 $app->run();
