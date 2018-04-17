@@ -230,30 +230,46 @@
                 <th class="stat-data">&nbsp;</th>
             </thead>
             {% for singleregistration in registeredinfo %}
-            <tr class="stat-data"> 
+            <tr class="stat-data" data-rowid="{{singleregistration.ID}}"> 
                 <td class="stat-data">{{ singleregistration.ID|default('-----')|e }} <br>
                 {% if singleregistration.ID is not empty %}
                     <input type="checkbox" name="checkbox_Name{{singleregistration.ID}}" id="checkbox_ID{{singleregistration.ID}}" class="printcheckbox" data-identifier="{{singleregistration.ID}}">
                 {% endif %}
-                </td class="stat-data">
+                </td>
                 {% if singleregistration.PATHTOBARCODE is not empty %}
                 <td class="stat-data" style="padding-left:20px; padding-right:20px"><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
                 {% else %}
                 <td class="stat-data"> ----- </td>
                 {% endif %}
-                <td class="stat-data">{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</td>
-                <td class="stat-data">{{ singleregistration.FIELD1|default('-----')|e }}</td>
-                <td class="stat-data">{{ singleregistration.FIELD2|default('-----')|e }}</td>
-                <td class="stat-data">{{ singleregistration.FIELD3|default('-----')|e }}</td>
-                <td class="stat-data">{{ singleregistration.BARCODETYPE|default('-----')|e }}</td>
-                <td> <input type="button" value="{{localizedmessages["registeredlistsingleeditbtn"]}}" data-editbtn-id="{{singleregistration.ID}}" onclick="invokeedit(event);"> <br /> 
+                <td class="stat-data">
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.RAWBARCODEREGISTERED|e }}" name="recordentry-input-rawbarcode"> </span>
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text">{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</span>
+                </td>
+                <td class="stat-data">
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD1|e }}" name="recordentry-input-field1"> </span>
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text">{{ singleregistration.FIELD1|default('-----')|e }}</span>
+                </td>
+                <td class="stat-data">
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD2|e }}" name="recordentry-input-field2"> </span>
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text">{{ singleregistration.FIELD2|default('-----')|e }}</span>
+                </td>
+                <td class="stat-data">
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD3|e }}" name="recordentry-input-field3"> </span>
+                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text">{{ singleregistration.FIELD3|default('-----')|e }}</span>
+                </td>
+                <td class="stat-data">
+                    {# <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.BARCODETYPE|e }}"> </span> #}
+                    <span data-recordentryid="{{singleregistration.ID}}" {# class="recordentry-text" #}>{{ singleregistration.BARCODETYPE|default('-----')|e }}</span>
+                </td>
+                <td> <input type="button" value="{{localizedmessages["registeredlistsingleeditbtn"]}}" data-editbtn-id="{{singleregistration.ID}}" data-editbtn-mode="edit" onclick="invokeedit(event);"> <br /> 
                      <input type="button" value="{{localizedmessages["registeredlistsingleremovebtn"]}}" data-removebtn-id="{{singleregistration.ID}}" onclick="invokeremove(event);"> </td>
             </tr>
             {% endfor %}
         </table>
         <script>
+            var globalSaveBtnUsed = 0; //used to control that only one entry is being edited
             //contains XHR to remove the registered barcodes
-            function removeItemsArray(in_ArrayToRemove) {
+            function removeItemsArray(in_ArrayToRemove, in_callbackAfterXHR) {
                 var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
                 var o1svinkapeppa = { barcodestoremove: [] };
                 o1svinkapeppa.barcodestoremove = in_ArrayToRemove;
@@ -264,20 +280,71 @@
                         if (XHR.status != 200) {
                             alert(XHR.status + ': ' + XHR.statusText);
                         } else {
-
+                            in_callbackAfterXHR();
                         }
                 };
+                XHR.setRequestHeader('Content-Type', 'application/json');
+                XHR.send(jsonbody);
             }
-            //pass parameters to button handler as here: https://stackoverflow.com/a/38632590/
+            //contains XHR to modify the SINGLE registered barcode
+            function modifyItemsArray(in_ToModify, in_callbackAfterXHR) {
+                var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                var o1jsonobject = { barcodetomodify: {} };
+                o1jsonobject.barcodetomodify=in_ToModify;
+                var jsonbody = JSON.stringify(o1jsonobject);
+                XHR.open("POST", "/updatecode", true);
+                XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                        if (XHR.status != 200) {
+                                alert(XHR.status + ': ' + XHR.statusText);
+                        } else {
+                            in_callbackAfterXHR();
+                        }
+                };
+                XHR.setRequestHeader('Content-Type', 'application/json');
+                XHR.send(jsonbody);
+            }
+            //EDIT HANDLER AND REMOVE HANDLER. pass parameters to button handler as here: https://stackoverflow.com/a/38632590/
             invokeedit = (event) => {
-                let arg1 = event.target.getAttribute('data-editbtn-id');
-                //We can add more args as needed...
+                let arg1 = event.target.getAttribute('data-editbtn-id'); //id of item to process
+                let arg2 = event.target.getAttribute('data-editbtn-mode'); //mode of button: edit or save
+                if ((arg2==="edit")&&(globalSaveBtnUsed === 0)) { //switch to Save and make row editable
+                    event.target.setAttribute("value", "{{localizedmessages["registeredlistsinglesavebtn"]}}");
+                    globalSaveBtnUsed = 1;
+                    $('span.recordentry-text[data-recordentryid=\"'+arg1+'\"]').toggle();
+                    $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"]').toggle();
+                    event.target.setAttribute('data-editbtn-mode', "save");
+                } else if (arg2==="save") { //switch to edit and save data
+                    globalSaveBtnUsed = 0;
+                    event.target.setAttribute("value", "{{localizedmessages["registeredlistsingleeditbtn"]}}");
+                    //assemble data for edit
+                    var collectedDataForEdit={ID:"", rawbarcode:"", field1:"", field2:"", field3:""};
+                    collectedDataForEdit.ID = arg1;
+                    collectedDataForEdit.rawbarcode = $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"] input[name=\"recordentry-input-rawbarcode\"]').val();
+                    collectedDataForEdit.field1 = $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"] input[name=\"recordentry-input-field1\"]').val();
+                    collectedDataForEdit.field2 = $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"] input[name=\"recordentry-input-field2\"]').val();
+                    collectedDataForEdit.field3 = $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"] input[name=\"recordentry-input-field3\"]').val();
+                    //send requets with collected data
+                    var callbackUpdateRow = function() {
+                        alert('after update');
+                    };
+                    modifyItemsArray(collectedDataForEdit, callbackUpdateRow);
+                    
+                    $('span.recordentry-text[data-recordentryid=\"'+arg1+'\"]').toggle();
+                    $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"]').toggle();
+                    event.target.setAttribute('data-editbtn-mode', "edit");
+                }
                 console.log("Handling button: "+arg1);
             };
             invokeremove = (event) => {
-                let arg1 = event.target.getAttribute('data-removebtn-id');
+                var arg1 = event.target.getAttribute('data-removebtn-id');
                 console.log("Handling remove button: "+arg1);
-
+                var callbackRemoveRow = function() {
+                    //get row(s) with selected data https://api.jquery.com/attribute-equals-selector/
+                    // https://stackoverflow.com/a/21756787/
+                   $('tr[data-rowid=\"'+arg1+'\"]').remove();
+                };
+                removeItemsArray( [arg1], callbackRemoveRow );
             };
         </script>
     </body>

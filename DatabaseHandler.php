@@ -19,7 +19,7 @@ class DataBaseHandler {
             '(ID INTEGER PRIMARY KEY AUTOINCREMENT, PATHTOBARCODE TEXT, RAWBARCODEREGISTERED TEXT NOT NULL UNIQUE, FIELD1 TEXT, FIELD2 TEXT, FIELD3 TEXT, BARCODETYPE VARCHAR(10) )',
             
             'Create table if not exists '.$this->scanHistoryTableName.
-            '(ID INTEGER PRIMARY KEY AUTOINCREMENT, KNOWNBARCODE_ID INTEGER, RAWBARCODE TEXT, SCANDATETIME TEXT, FOREIGN KEY(KNOWNBARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) )'
+            '(ID INTEGER PRIMARY KEY AUTOINCREMENT, KNOWNBARCODE_ID INTEGER, RAWBARCODE TEXT, SCANDATETIME TEXT, FOREIGN KEY(KNOWNBARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) ON DELETE CASCADE ON UPDATE CASCADE )'
         ];
         foreach ($commandList as $command) {
             $this->pdoInstance->exec($command);
@@ -100,6 +100,46 @@ class DataBaseHandler {
         $stmt->execute();
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
             return $row["TOTALITEMS"];
+        }
+    }
+    /**
+     * remove barcodes identified by list of IDs
+     * @param type $in_barcodeListID
+     */
+    public function removeSavedBarcodes($in_barcodeListID) {
+        $in  = str_repeat('?,', count($in_barcodeListID) - 1) . '?';
+        $sqlstatement = "DELETE FROM ".$this->existingBarcodesTableName." WHERE ID IN ($in)";
+        $stmt = $this->pdoInstance->prepare( $sqlstatement );
+        $stmt = $this->pdoInstance->prepare( $sqlstatement );
+        $stmt->execute($in_barcodeListID);
+    }
+    
+    public function updateSingleBarcode($in_barcodeObject, $newPathToBarcode) {
+        $usedID = $in_barcodeObject->{"ID"};
+        $usedRawBarcode = $in_barcodeObject->{"rawbarcode"};
+        $usedField1 = $in_barcodeObject->{"field1"};
+        $usedField2 = $in_barcodeObject->{"field2"};
+        $usedField3 = $in_barcodeObject->{"field3"};
+        $stmt = $this->pdoInstance->prepare("UPDATE ".$this->existingBarcodesTableName." SET PATHTOBARCODE=:usepath, RAWBARCODEREGISTERED=:usebarcode, FIELD1=:fld1, FIELD2=:fld2, FIELD3=:fld3 WHERE ID=:useID");
+        $stmt->bindParam(":usepath", $newPathToBarcode, PDO::PARAM_STR);
+        $stmt->bindParam(":usebarcode", $usedRawBarcode, PDO::PARAM_STR);
+        $stmt->bindParam(":fld1", $usedField1, PDO::PARAM_STR);
+        $stmt->bindParam(":fld2", $usedField2, PDO::PARAM_STR);
+        $stmt->bindParam(":fld3", $usedField3, PDO::PARAM_STR);
+        $stmt->bindParam(":useID", intval($usedID), PDO::PARAM_INT);
+        $stmt->execute();
+        
+    }
+    
+    public function getSingleBarcodeTypeAndPathByID($in_barcodeID) {
+        $objectToReturn = (object)["BARCODETYPE"=>"", "PATHTOBARCODE"=>""];
+        $stmt=$this->pdoInstance->prepare("SELECT BARCODETYPE, PATHTOBARCODE FROM ".$this->existingBarcodesTableName." WHERE ID=:usedID");
+        $stmt->bindParam(":usedID", intval($in_barcodeID), PDO::PARAM_INT);
+        $stmt->execute();
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $objectToReturn->{"BARCODETYPE"}   = row["BARCODETYPE"];
+            $objectToReturn->{"PATHTOBARCODE"} = row["PATHTOBARCODE"];
+            return $objectToReturn;
         }
     }
 }

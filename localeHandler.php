@@ -33,7 +33,7 @@ class localeHandler {
             "registeredlistalreadyexist"=>"Item Already Exist",
             "registeredlistsingleremovebtn"=>"[Remove]",
             "registeredlistsingleeditbtn"=>"[Edit]",
-            
+            "registeredlistsinglesavebtn"=>"[Save]",
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -66,6 +66,7 @@ class localeHandler {
             "registeredlistalreadyexist"=>"Такой штрихкод уже существует",
             "registeredlistsingleremovebtn"=>"[Удалить]",
             "registeredlistsingleeditbtn"=>"[Править]",
+            "registeredlistsinglesavebtn"=>"[Сохранить]",
             "registeredlistnorawcode"=>"Данные в штрихкоде должны быть заполнены",
             
             ],

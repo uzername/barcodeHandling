@@ -17,3 +17,9 @@ div#div-newcode-barcodedescr {
 .red-border{
     border: 2px solid red;
 }
+.recordentry-text {
+    display:block;
+}
+.recordentry-edit {
+    display:none;
+}
