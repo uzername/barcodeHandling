@@ -10,10 +10,22 @@
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript" src="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick.min.js"> </script>
         <script type="text/javascript" src="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick-ru.min.js"></script>
+        <script type="text/javascript"> 
+        $('#startPicker,#endPicker').datepick({ onSelect: customRange, showTrigger: '<button type="button" class="trigger">...</button>'}); 
+            function customRange(dates) { 
+                if (this.id == 'startPicker') { 
+                    $('#endPicker').datepick('option', 'minDate', dates[0] || null); 
+                } 
+                else { 
+                    $('#startPicker').datepick('option', 'maxDate', dates[0] || null); 
+                } 
+            }
+        </script>
     </head>
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
-        
+        <input type="text" id="startPicker" size="10" class="is-datepick"> 
+        <input type="text" id="endPicker" size="10" class="is-datepick">
         <table class="stat-data">
             <thead> 
                 <tr> 

@@ -182,7 +182,7 @@ $app->post("/updatecode",function(Request $request, Response $response, array $a
     
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
      //how should we refer to this image on site
-     $subpathToBarcode = "/data/barcodes/".$body->{'barcodetomodify'}->{'rawbarcode'}."_".$localtime->format('Ymd_His')."_".$body->{'barcodetomodify'}->{'barcodetype'}.".svg";
+     $subpathToBarcode = "/data/barcodes/".$body->{'barcodetomodify'}->{'rawbarcode'}."_".$localtime->format('Ymd_His')."_".$barcodeData->{"BARCODETYPE"}.".svg";
      //how we should refr to this image on disk
      $pathToBarcode = __DIR__.$subpathToBarcode;
      $generator = new \Picqer\Barcode\BarcodeGeneratorSVG();

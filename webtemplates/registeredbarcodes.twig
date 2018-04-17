@@ -327,12 +327,14 @@
                     collectedDataForEdit.field3 = $('span.recordentry-edit[data-recordentryid=\"'+arg1+'\"] input[name=\"recordentry-input-field3\"]').val();
                     //send request with collected data
                     var callbackUpdateRow = function(in_newURL) { //callback is called when request succeeded
+                        console.log("callbackUpdateRow"); console.log(in_newURL); console.log(arg1);
                         $('span.recordentry-span-rawbarcode[data-recordentryid=\"'+arg1+'\"]').text(collectedDataForEdit.rawbarcode);
                         $('span.recordentry-span-field1[data-recordentryid=\"'+arg1+'\"]').text(collectedDataForEdit.field1);
                         $('span.recordentry-span-field2[data-recordentryid=\"'+arg1+'\"]').text(collectedDataForEdit.field2);
                         $('span.recordentry-span-field3[data-recordentryid=\"'+arg1+'\"]').text(collectedDataForEdit.field3);
-                        $('img[data-entryid-img=\"'+arg1+'\"]').attr("src",in_newURL)
+                        $('img[data-entryid-img=\"'+arg1+'\"]').attr("src",in_newURL);
                     };
+                    console.log(collectedDataForEdit);
                     modifyItemsArray(collectedDataForEdit, callbackUpdateRow);
                     
                     $('span.recordentry-text[data-recordentryid=\"'+arg1+'\"]').toggle();

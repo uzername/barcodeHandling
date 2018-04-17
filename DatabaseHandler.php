@@ -115,7 +115,7 @@ class DataBaseHandler {
     }
     
     public function updateSingleBarcode($in_barcodeObject, $newPathToBarcode) {
-        $usedID = $in_barcodeObject->{"ID"};
+        $usedID = intval($in_barcodeObject->{"ID"});
         $usedRawBarcode = $in_barcodeObject->{"rawbarcode"};
         $usedField1 = $in_barcodeObject->{"field1"};
         $usedField2 = $in_barcodeObject->{"field2"};
@@ -126,15 +126,16 @@ class DataBaseHandler {
         $stmt->bindParam(":fld1", $usedField1, PDO::PARAM_STR);
         $stmt->bindParam(":fld2", $usedField2, PDO::PARAM_STR);
         $stmt->bindParam(":fld3", $usedField3, PDO::PARAM_STR);
-        $stmt->bindParam(":useID", intval($usedID), PDO::PARAM_INT);
+        $stmt->bindParam(":useID", $usedID, PDO::PARAM_INT);
         $stmt->execute();
         
     }
     
     public function getSingleBarcodeTypeAndPathByID($in_barcodeID) {
         $objectToReturn = [];
+        $usedID = intval($in_barcodeID);
         $stmt=$this->pdoInstance->prepare("SELECT BARCODETYPE, PATHTOBARCODE FROM ".$this->existingBarcodesTableName." WHERE ID=:usedID");
-        $stmt->bindParam(":usedID", intval($in_barcodeID), PDO::PARAM_INT);
+        $stmt->bindParam(":usedID", $usedID, PDO::PARAM_INT);
         $stmt->execute();
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
             $objectToReturn= (object)["BARCODETYPE" => $row["BARCODETYPE"], "PATHTOBARCODE" => $row["PATHTOBARCODE"]];
