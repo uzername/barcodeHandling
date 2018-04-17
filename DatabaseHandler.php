@@ -132,13 +132,12 @@ class DataBaseHandler {
     }
     
     public function getSingleBarcodeTypeAndPathByID($in_barcodeID) {
-        $objectToReturn = (object)["BARCODETYPE"=>"", "PATHTOBARCODE"=>""];
+        $objectToReturn = [];
         $stmt=$this->pdoInstance->prepare("SELECT BARCODETYPE, PATHTOBARCODE FROM ".$this->existingBarcodesTableName." WHERE ID=:usedID");
         $stmt->bindParam(":usedID", intval($in_barcodeID), PDO::PARAM_INT);
         $stmt->execute();
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $objectToReturn->{"BARCODETYPE"}   = row["BARCODETYPE"];
-            $objectToReturn->{"PATHTOBARCODE"} = row["PATHTOBARCODE"];
+            $objectToReturn= (object)["BARCODETYPE" => $row["BARCODETYPE"], "PATHTOBARCODE" => $row["PATHTOBARCODE"]];
             return $objectToReturn;
         }
     }

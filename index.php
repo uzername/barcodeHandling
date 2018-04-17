@@ -175,9 +175,9 @@ $app->post("/updatecode",function(Request $request, Response $response, array $a
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = json_decode( $request->getBody()->getContents() );
-    $barcodeData = $dbInstance->getSingleBarcodeTypeAndPathByID($body->{'newbarcode'}->{'ID'});
+    $barcodeData = $dbInstance->getSingleBarcodeTypeAndPathByID($body->{'barcodetomodify'}->{'ID'});
     //old barcode goes away
-    unlink(__DIR__.$barcodeData["PATHTOBARCODE"]);
+    unlink(__DIR__.$barcodeData->{"PATHTOBARCODE"});
     //generate new barcode
     
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
@@ -186,11 +186,15 @@ $app->post("/updatecode",function(Request $request, Response $response, array $a
      //how we should refr to this image on disk
      $pathToBarcode = __DIR__.$subpathToBarcode;
      $generator = new \Picqer\Barcode\BarcodeGeneratorSVG();
-     $generatedBytes = $generator->getBarcode($body->{'barcodetomodify'}->{'rawbarcode'}, ($barcodeData["BARCODETYPE"] == "CODE128")?"C128":$barcodeData["BARCODETYPE"],1,125);
+     $generatedBytes = $generator->getBarcode($body->{'barcodetomodify'}->{'rawbarcode'}, ($barcodeData->{"BARCODETYPE"} == "CODE128")?"C128":$barcodeData->{"BARCODETYPE"},1,125);
      file_put_contents($pathToBarcode, $generatedBytes);
      
     //====================
     $dbInstance->updateSingleBarcode( $body->{'barcodetomodify'}, $subpathToBarcode );
+    $data = array(['status' => 'OK', 'addedfilepath'=>$request->getUri()->getBasePath().$subpathToBarcode]);
+    $newResponse = $response;
+    $newResponse = $newResponse->withJson($data)->withStatus(200);
+    return $newResponse;
 });
 //render print page with barcodes
 $app->post('/printpage', function(Request $request, Response $response, array $args){
