@@ -3,13 +3,9 @@
         <meta charset="UTF8">
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
          <style>
-            table {
-            border-collapse: collapse;    
-            }
-            table, th, td {
-            border: 1px solid black;
-            }
+
         </style>
+        <link rel="stylesheet" type="text/css" href="../webtemplatesresources/commonbar.css" >
         <link rel="stylesheet" type="text/css" href="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick.css"> 
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
         <script type="text/javascript" src="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick.min.js"> </script>
@@ -18,21 +14,21 @@
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         
-        <table>
+        <table class="stat-data">
             <thead> 
                 <tr> 
-                    <th>&nbsp;</th> 
-                    <th> {{localizedmessages['knownbarcode_id_header']|default('known barcode id')}} </th> 
-                    <th> {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
-                    <th> {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
+                    <th class="stat-data" >&nbsp;</th> 
+                    <th class="stat-data" > {{localizedmessages['knownbarcode_id_header']|default('known barcode id')}} </th> 
+                    <th class="stat-data" > {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
+                    <th class="stat-data" > {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
                 </tr>
             </thead>
             {% for singlescan in scanlist %}
-            <tr> 
-                <td>{{ singlescan.ID|default('-----')|e }}</td>
-                <td>{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}</td>
-                <td>{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
-                <td>{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
+            <tr class="stat-data"> 
+                <td class="stat-data">{{ singlescan.ID|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
             </tr>
             {% endfor %}
             

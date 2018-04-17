@@ -60,16 +60,17 @@
                         // add here barcode to list
                         console.log(rawresponse[0]);
                         if (rawresponse[0].status==="OK") {
-                            var $newrow = $("<tr> </tr>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.ID+"<br />"+
+                            var $newrow = $("<tr class=\"stat-data\"> </tr>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.ID+"<br />"+
                             "<input type=\"checkbox\" name=\"checkbox_Name"+rawresponse[0].backtrackdata.ID+"\" id=\"checkbox_ID"+rawresponse[0].backtrackdata.ID+"\" class=\"printcheckbox\" data-identifier=\""+rawresponse[0].backtrackdata.ID+"\">"
                             +" </td>");
-                            $newrow.append("<td> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput1+" </td>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput2+" </td>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.fldinput3+" </td>");
-                            $newrow.append("<td> "+rawresponse[0].backtrackdata.barcodetype+" </td>");
+                            $newrow.append("<td class=\"stat-data\" style=\"padding-left:20px; padding-right:20px\"> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput1+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput2+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput3+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.barcodetype+" </td>");
+                            $newrow.append("<td> <input type=\"button\" value=\"{{localizedmessages["registeredlistsingleeditbtn"]}}\"> <br /> <input type=\"button\" value=\"{{localizedmessages["registeredlistsingleremovebtn"]}}\"> </td>");
                             
                             $("table#table-registereditems").prepend($newrow);
                         } else {
@@ -104,6 +105,10 @@
                         }
                         var processableEntry = [];
                         processableEntry["rawcode"] = $("#newcodeinput").val();
+                        if  ( ( processableEntry["rawcode"].length == 0)||(processableEntry["rawcode"] == "") ) {
+                            alert("{{localizedmessages["registeredlistnorawcode"]}}");
+                            return;
+                        }
                         processableEntry["codetype"] = $("#newcode-barcodetypes").val();
                         processableEntry["fldinput1"] = $("#fldinput1").val();
                         processableEntry["fldinput2"] = $("#fldinput2").val();
@@ -211,38 +216,69 @@
                 {% if  registeredinfo|length > 0 %}
                 <input type="button" name="printbtn" id="printbtn" value="{{ localizedmessages['registeredlistprint'] }}"> <br/>
                 {%endif%}
-        <table id = "table-registereditems">
+        <table id = "table-registereditems" class="stat-data">
             <thead>
-                <th>&nbsp;</th> 
-                <th> {{localizedmessages["registeredlistbarcodecapt"]}} </th>
-                <th> {{localizedmessages["ncodebarcode"]}} </th>
+                <th class="stat-data">&nbsp;</th> 
+                <th class="stat-data"> {{localizedmessages["registeredlistbarcodecapt"]}} </th>
+                <th class="stat-data"> {{localizedmessages["ncodebarcode"]}} </th>
                 
-                <th> {{localizedmessages["ncodefield1"]}} </th>
-                <th> {{localizedmessages["ncodefield2"]}} </th>
-                <th> {{localizedmessages["ncodefield3"]}} </th>
+                <th class="stat-data"> {{localizedmessages["ncodefield1"]}} </th>
+                <th class="stat-data"> {{localizedmessages["ncodefield2"]}} </th>
+                <th class="stat-data"> {{localizedmessages["ncodefield3"]}} </th>
                 
-                <th> {{localizedmessages["ncodebarcodetype"]}} </th>
+                <th class="stat-data"> {{localizedmessages["ncodebarcodetype"]}} </th>
+                <th class="stat-data">&nbsp;</th>
             </thead>
             {% for singleregistration in registeredinfo %}
-            <tr> 
-                <td>{{ singleregistration.ID|default('-----')|e }} <br>
+            <tr class="stat-data"> 
+                <td class="stat-data">{{ singleregistration.ID|default('-----')|e }} <br>
                 {% if singleregistration.ID is not empty %}
                     <input type="checkbox" name="checkbox_Name{{singleregistration.ID}}" id="checkbox_ID{{singleregistration.ID}}" class="printcheckbox" data-identifier="{{singleregistration.ID}}">
                 {% endif %}
-                </td>
+                </td class="stat-data">
                 {% if singleregistration.PATHTOBARCODE is not empty %}
-                <td><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
+                <td class="stat-data" style="padding-left:20px; padding-right:20px"><img src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
                 {% else %}
-                <td> ----- </td>
+                <td class="stat-data"> ----- </td>
                 {% endif %}
-                <td>{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</td>
-                <td>{{ singleregistration.FIELD1|default('-----')|e }}</td>
-                <td>{{ singleregistration.FIELD2|default('-----')|e }}</td>
-                <td>{{ singleregistration.FIELD3|default('-----')|e }}</td>
-                <td>{{ singleregistration.BARCODETYPE|default('-----')|e }}</td>
+                <td class="stat-data">{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</td>
+                <td class="stat-data">{{ singleregistration.FIELD1|default('-----')|e }}</td>
+                <td class="stat-data">{{ singleregistration.FIELD2|default('-----')|e }}</td>
+                <td class="stat-data">{{ singleregistration.FIELD3|default('-----')|e }}</td>
+                <td class="stat-data">{{ singleregistration.BARCODETYPE|default('-----')|e }}</td>
+                <td> <input type="button" value="{{localizedmessages["registeredlistsingleeditbtn"]}}" data-editbtn-id="{{singleregistration.ID}}" onclick="invokeedit(event);"> <br /> 
+                     <input type="button" value="{{localizedmessages["registeredlistsingleremovebtn"]}}" data-removebtn-id="{{singleregistration.ID}}" onclick="invokeremove(event);"> </td>
             </tr>
             {% endfor %}
         </table>
-        
+        <script>
+            //contains XHR to remove the registered barcodes
+            function removeItemsArray(in_ArrayToRemove) {
+                var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                var o1svinkapeppa = { barcodestoremove: [] };
+                o1svinkapeppa.barcodestoremove = in_ArrayToRemove;
+                var jsonbody = JSON.stringify(o1svinkapeppa);                
+                XHR.open("POST", "/removecode", true);
+                XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                        if (XHR.status != 200) {
+                            alert(XHR.status + ': ' + XHR.statusText);
+                        } else {
+
+                        }
+                };
+            }
+            //pass parameters to button handler as here: https://stackoverflow.com/a/38632590/
+            invokeedit = (event) => {
+                let arg1 = event.target.getAttribute('data-editbtn-id');
+                //We can add more args as needed...
+                console.log("Handling button: "+arg1);
+            };
+            invokeremove = (event) => {
+                let arg1 = event.target.getAttribute('data-removebtn-id');
+                console.log("Handling remove button: "+arg1);
+
+            };
+        </script>
     </body>
 </html>

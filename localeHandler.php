@@ -29,7 +29,11 @@ class localeHandler {
             "registeredlistprint"=>"Print Selected", //used in table too
             "registeredlistbarcodecapt"=>"Barcode", //used in table too
             "registeredlistnoitemstoprint"=>"No items selected",
+            "registeredlistnorawcode"=>"Data in barcode cannot be empty!",
             "registeredlistalreadyexist"=>"Item Already Exist",
+            "registeredlistsingleremovebtn"=>"[Remove]",
+            "registeredlistsingleeditbtn"=>"[Edit]",
+            
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -60,6 +64,9 @@ class localeHandler {
             "registeredlistbarcodecapt" => "Штрихкод", //used in table too
             "registeredlistnoitemstoprint"=>"Ничего не выбрано для печати",
             "registeredlistalreadyexist"=>"Такой штрихкод уже существует",
+            "registeredlistsingleremovebtn"=>"[Удалить]",
+            "registeredlistsingleeditbtn"=>"[Править]",
+            "registeredlistnorawcode"=>"Данные в штрихкоде должны быть заполнены",
             
             ],
         "page-printpage"=>[

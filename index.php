@@ -85,7 +85,8 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
     }
-    $dbInstance->saveScanTime($body->{'scannedbarcode'}, $localtime->format('Y-m-d H:i:s'));
+    $knownBarcodeIDFound = $dbInstance->obtainKnownBarcodeIDByText($body->{'scannedbarcode'});
+    $dbInstance->saveScanTime($body->{'scannedbarcode'}, $knownBarcodeIDFound ,$localtime->format('Y-m-d H:i:s'));
     $data = array(['status' => 'OK', 'time'=>($localtime->format('Y-m-d H:i:s'))]);
     $newResponse = $response;
     $newResponse = $newResponse->withJson($data)->withStatus(200);
@@ -156,6 +157,15 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
     $newResponse = $response;
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
+});
+
+$app->post('/removecode',function(Request $request, Response $response, array $args){
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $body = json_decode( $request->getBody()->getContents() );
+    $body->{'barcodestoremove'};
 });
 
 $app->post('/printpage', function(Request $request, Response $response, array $args){

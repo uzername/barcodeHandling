@@ -9,3 +9,9 @@ body {
     clear: both;
     display: table;
 }
+            table.stat-data {
+            border-collapse: collapse;    
+            }
+            table.stat-data, th.stat-data, td.stat-data {
+            border: 1px solid black;
+            }

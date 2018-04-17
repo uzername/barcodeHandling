@@ -25,10 +25,19 @@ class DataBaseHandler {
             $this->pdoInstance->exec($command);
         }
     }
-    public function saveScanTime($inSavedBarcodeText, $inSavedTime) {
-        $stmt = $this->pdoInstance->prepare("Insert INTO ".$this->scanHistoryTableName."(RAWBARCODE, SCANDATETIME) VALUES (:rawtext, :rawtime)");
+    //it is possible to combine the following routine to a single one. In this case in saveScanTime parameter $inKnownBarcodeID is removed and query is rewritten as follows: https://stackoverflow.com/a/21152791
+    public function obtainKnownBarcodeIDByText($inRawText) {
+        $stmt = $this->pdoInstance->prepare("SELECT ID FROM registeredbarcodes WHERE RAWBARCODEREGISTERED = :rawtext");
+        $stmt->bindParam(":rawtext", $inRawText, PDO::PARAM_STR);
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return $row["ID"];
+        }
+    }
+    public function saveScanTime($inSavedBarcodeText, $inKnownBarcodeID, $inSavedTime) {
+        $stmt = $this->pdoInstance->prepare("Insert INTO ".$this->scanHistoryTableName."(RAWBARCODE, KNOWNBARCODE_ID SCANDATETIME) VALUES (:rawtext, :rawtime, :rawknownID)");
         $stmt->bindParam(":rawtext", $inSavedBarcodeText, PDO::PARAM_STR);
         $stmt->bindParam(":rawtime", $inSavedTime, PDO::PARAM_STR);
+        $stmt->bindParam(":rawknownID", $inSavedTime, PDO::PARAM_STR);
         $stmt->execute();
     }
     public function listAllScanTime() {
