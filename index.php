@@ -99,10 +99,94 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
 });
-
-$app->get('/list[/v2][/]', function(Request $request, Response $response, array $args){
+///*********************
+function sortArrayOfScannedItemsByBarcode($in_initialUnsortedStruct) {
+    /// The comparison function must return an integer less than, equal to, or greater than zero if the first argument is considered to be respectively less than, equal to, or greater than the second
+    function cmp($a, $b) {
+        return strcmp( $a->{'RAWBARCODE'}, $b->{'RAWBARCODE'} );
+    }
+    $out_sortedStruct = $in_initialUnsortedStruct;
+    usort($out_sortedStruct, "cmp");
+    return $out_sortedStruct;
+}
+function prepareDataStructure($in_initialStruct) {
+    $resultStructure = [];
+    $step1PreparedArray = sortArrayOfScannedItemsByBarcode($in_initialStruct);
+    $previousValue = null;
+    foreach ($step1PreparedArray as $value) { //array is monotonous
+        
+    }
+    return $resultStructure;
+}
+///*********************
+$app->get('/list/v2[/]', function(Request $request, Response $response, array $args){
     session_start();
-    $ambiguouspath = $request->getPath();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    }
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
+    $templateTransmission['wayback'] = "/list/v2";
+        $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
+    if (isset($_GET) ) {    //// date and time fiddling
+        $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
+        $toDateEnabled = ( isset($_GET["to"])&& validateDate(urldecode($_GET["to"])) );
+        
+        if ($fromDateEnabled && $toDateEnabled) {
+            $dateStartString = urldecode($_GET["from"]); 
+            $dateEndString = urldecode($_GET["to"]);
+        }
+        if ( ($fromDateEnabled === TRUE) && ($toDateEnabled === FALSE) ) { //2nd date is to be used as current date
+            $dateStartString = urldecode($_GET["from"]); 
+            $tmplocaldate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocaldate->format("d.m.Y");
+        }
+        if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
+            $dateEndString = urldecode($_GET["to"]); 
+            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
+            $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmpprevdate->format("d.m.Y");
+        }
+        if (($fromDateEnabled === FALSE) && ($toDateEnabled === FALSE)) {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
+        }
+    } else {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
+    }
+    $sqlitedateStart = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone('Europe/Kiev'))->format("Y-m-d");
+    $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
+    $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
+    $rawscanTimeValues = prepareDataStructure($rawscanTimeValues);
+    
+    $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
+    $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
+    $templateTransmission["scanlist"] = $rawscanTimeValues;
+    $templateTransmission["datetime"]["from"] = $dateStartString;
+    $templateTransmission["datetime"]["to"] = $dateEndString;
+    
+    $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
+    $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);    
+    return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+});
+
+$app->get('/list[/]', function(Request $request, Response $response, array $args){
+    session_start();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
@@ -120,11 +204,9 @@ $app->get('/list[/v2][/]', function(Request $request, Response $response, array 
     }
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
-    if (($ambiguouspath == '/list/v2')||($ambiguouspath == '/list/v2/')) {
-        $templateTransmission['wayback'] = "/list/v2";
-    } elseif (($ambiguouspath == '/list/')||($ambiguouspath == '/list')) {
+
         $templateTransmission['wayback'] = "/list";
-    }
+
     $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
     if (isset($_GET) ) {    //// date and time fiddling
         $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
@@ -151,13 +233,16 @@ $app->get('/list[/v2][/]', function(Request $request, Response $response, array 
             $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
         }
+    } else {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
     }
     $sqlitedateStart = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone('Europe/Kiev'))->format("Y-m-d");
     $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
-    if (($ambiguouspath == '/list/v2/')||($ambiguouspath == '/list/v2')) {
-        
-    }
+
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
     $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
     $templateTransmission["scanlist"] = $rawscanTimeValues;
@@ -166,11 +251,7 @@ $app->get('/list[/v2][/]', function(Request $request, Response $response, array 
     
     $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
     $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);
-    if (($ambiguouspath == '/list/')||($ambiguouspath == '/list')) {
         return $this->view->render($response, "listbarcode.twig",$templateTransmission);
-    } elseif (($ambiguouspath == '/list/v2/')||($ambiguouspath == '/list/v2')) {
-        return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
-    }
 });
 
 $app->get('/registeredbarcodes[/]', function(Request $request, Response $response, array $args){

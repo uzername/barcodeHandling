@@ -20,24 +20,7 @@
             <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
             <a href="/list?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
         </div>
-        <table class="stat-data">
-            <thead> 
-                <tr> 
-                    <th class="stat-data" >&nbsp;</th> 
-                    <th class="stat-data" colspan="2"> {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
-                    <th class="stat-data" > {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
-                </tr>
-            </thead>
-            {% for scanagregated in scanlist %}
-            <tr class="stat-data"> 
-                <td class="stat-data">{{ singlescan.ID|default('-----')|e }}</td>
-                <td class="stat-data">[{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}]{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
-                <td class="stat-data">{{ singlescan.FIELD1|default('-----')|e }} {{ singlescan.FIELD2|default('-----')|e }} {{ singlescan.FIELD3|default('-----')|e }}</td>
-                <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
-            </tr>
-            {% endfor %}
-            
-        </table>
+        
         
         <script type="text/javascript">
             var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 

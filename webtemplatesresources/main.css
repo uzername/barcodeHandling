@@ -21,6 +21,7 @@
 div#toggle-scanresult {
     top: 50px;
     display: none;
+    cursor: cell;
 }
 .div-scanresult2 {
     width:100%;

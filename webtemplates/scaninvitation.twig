@@ -48,6 +48,9 @@
                         if (obtainedSuccessResponse[0].status==="OK") {
                             messageHandlerInstance.renderMessage("{{localizedmessages["invitationokresult"]}} <br> "+obtainedSuccessResponse[0].time,0);
                             console.log(obtainedSuccessResponse);
+                            if ($("#manualentry").val() !=="" ) {
+                                $("#manualentry").val("");
+                            }
                         } else {
                             switch (obtainedSuccessResponse[0].status) {
                                 case "FAIL_NOTALREADYEXIST": {
