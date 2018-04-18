@@ -9,6 +9,7 @@ class localeHandler {
         "common"=>["header"=>"SM_NM Scanner",
             "scannedlist"=>"[List Of registered Scans]",
             "registeredlist"=>"[List of Registered Barcodes]",
+            "scannedlist2"=>"[List Of registered Scans - Variant2]"
             ],
         "page-main"=>[
             "invitation"=>"Scan some barcode!",
@@ -49,7 +50,8 @@ class localeHandler {
     "ru" => array(
         "common"=>["header"=>"SM_NM Сканнер",
             "scannedlist"=>"[Список отсканированных элементов]",
-            "registeredlist"=>"[Список зарегистрированных элементов]"
+            "registeredlist"=>"[Список зарегистрированных элементов]",
+            "scannedlist2"=>"[Список отсканированных элементов - Вариант2]"
             ],
         "page-main"=>[
             "invitation"=>"Отсканируйте штрихкод!",
@@ -79,7 +81,7 @@ class localeHandler {
             ],
         
         "page-scanlist"=>[
-            "rawbarcode_header"=>"Данные в штрихкоде",
+            "rawbarcode_header"=>"Штрихкод",
             "scandatetime_header"=>"Время",
             "filterbydate"=>"[По дате]",
             "fromdate"=>"Дата Начало",

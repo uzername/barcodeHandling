@@ -100,12 +100,15 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
     return $newResponse;
 });
 
-$app->get('/list[/]', function(Request $request, Response $response, array $args){
+$app->get('/list[/v2][/]', function(Request $request, Response $response, array $args){
+    session_start();
+    $ambiguouspath = $request->getPath();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
-    $rawscanTimeValues = $dbInstance->listAllScanTime();
+    //$rawscanTimeValues = $dbInstance->listAllScanTime();
+    
     $templateTransmission = [];
     
     $privateLocaleHandler = new localeHandler();
@@ -117,9 +120,13 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     }
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
-    if (isset($_GET) ) {
-        $dateStartString = null; $dateEndString = null;
-        
+    if (($ambiguouspath == '/list/v2')||($ambiguouspath == '/list/v2/')) {
+        $templateTransmission['wayback'] = "/list/v2";
+    } elseif (($ambiguouspath == '/list/')||($ambiguouspath == '/list')) {
+        $templateTransmission['wayback'] = "/list";
+    }
+    $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
+    if (isset($_GET) ) {    //// date and time fiddling
         $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
         $toDateEnabled = ( isset($_GET["to"])&& validateDate(urldecode($_GET["to"])) );
         
@@ -134,7 +141,7 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
         }
         if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
             $dateEndString = urldecode($_GET["to"]); 
-            $tmplocaldate = date_create_from_format("d.M.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
+            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
             $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
             $dateStartString = $tmpprevdate->format("d.m.Y");
         }
@@ -145,6 +152,12 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
         }
     }
+    $sqlitedateStart = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone('Europe/Kiev'))->format("Y-m-d");
+    $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
+    $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
+    if (($ambiguouspath == '/list/v2/')||($ambiguouspath == '/list/v2')) {
+        
+    }
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
     $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
     $templateTransmission["scanlist"] = $rawscanTimeValues;
@@ -153,8 +166,11 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     
     $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
     $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);
-    
-    return $this->view->render($response, "listbarcode.twig",$templateTransmission);
+    if (($ambiguouspath == '/list/')||($ambiguouspath == '/list')) {
+        return $this->view->render($response, "listbarcode.twig",$templateTransmission);
+    } elseif (($ambiguouspath == '/list/v2/')||($ambiguouspath == '/list/v2')) {
+        return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+    }
 });
 
 $app->get('/registeredbarcodes[/]', function(Request $request, Response $response, array $args){

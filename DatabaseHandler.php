@@ -29,15 +29,17 @@ class DataBaseHandler {
     public function obtainKnownBarcodeIDByText($inRawText) {
         $stmt = $this->pdoInstance->prepare("SELECT ID FROM registeredbarcodes WHERE RAWBARCODEREGISTERED = :rawtext");
         $stmt->bindParam(":rawtext", $inRawText, PDO::PARAM_STR);
+        $stmt->execute();
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
             return $row["ID"];
         }
     }
+    //sqlite saves datetime in format of YYYY-MM-DD. $inSavedTime is time a string formatted that way
     public function saveScanTime($inSavedBarcodeText, $inKnownBarcodeID, $inSavedTime) {
-        $stmt = $this->pdoInstance->prepare("Insert INTO ".$this->scanHistoryTableName."(RAWBARCODE, KNOWNBARCODE_ID SCANDATETIME) VALUES (:rawtext, :rawtime, :rawknownID)");
+        $stmt = $this->pdoInstance->prepare("Insert INTO ".$this->scanHistoryTableName."(RAWBARCODE, SCANDATETIME, KNOWNBARCODE_ID) VALUES (:rawtext, :rawtime, :rawknownID)");
         $stmt->bindParam(":rawtext", $inSavedBarcodeText, PDO::PARAM_STR);
         $stmt->bindParam(":rawtime", $inSavedTime, PDO::PARAM_STR);
-        $stmt->bindParam(":rawknownID", $inSavedTime, PDO::PARAM_STR);
+        $stmt->bindParam(":rawknownID", $inKnownBarcodeID, PDO::PARAM_STR);
         $stmt->execute();
     }
     public function listAllScanTime() {
@@ -47,6 +49,21 @@ class DataBaseHandler {
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
             $allScan[] = (object)['ID'=>$row['ID'], 'KNOWNBARCODE_ID'=>$row['KNOWNBARCODE_ID'], 'RAWBARCODE'=>$row['RAWBARCODE'], 'SCANDATETIME'=>$row['SCANDATETIME'] ];
             
+        }
+        return $allScan;
+    }
+    //sqlite saves datetime in format of YYYY-MM-DD. $in_dateTimeStart and $in_dateTimeEnd are time strings formatted that way
+    //https://stackoverflow.com/a/8187455/
+    public function listScanTimesInRange($in_dateTimeStart, $in_dateTimeEnd) {
+        $stmt = $this->pdoInstance->prepare("SELECT ".$this->scanHistoryTableName.".ID, SCANDATETIME, KNOWNBARCODE_ID, RAWBARCODE, FIELD1, FIELD2, FIELD3 FROM ".$this->scanHistoryTableName." INNER JOIN ".$this->existingBarcodesTableName.
+                " ON (".$this->scanHistoryTableName.".KNOWNBARCODE_ID = ".$this->existingBarcodesTableName.".ID) WHERE (SCANDATETIME BETWEEN :val1 AND :val2 )");
+        $stmt->bindParam(":val1", $in_dateTimeStart);
+        $stmt->bindParam(":val2", $in_dateTimeEnd);
+        $stmt->execute();
+        $allScan=[];        
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $allScan[] = (object)['ID'=>$row['ID'], 'KNOWNBARCODE_ID'=>$row['KNOWNBARCODE_ID'], 'RAWBARCODE'=>$row['RAWBARCODE'], 'SCANDATETIME'=>$row['SCANDATETIME'],
+                "FIELD1"=>$row["FIELD1"], "FIELD2"=>$row["FIELD2"], "FIELD3"=>$row["FIELD3"] ];            
         }
         return $allScan;
     }

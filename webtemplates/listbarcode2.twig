@@ -1,0 +1,83 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+         <style>
+           
+        </style>
+        <link rel="stylesheet" type="text/css" href="../webtemplatesresources/commonbar.css" >
+        <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
+        
+        <script type="text/javascript" src="../webtemplatesresources/fengdatepicker/datepicker.js"> </script>
+        <link rel="stylesheet" href="../webtemplatesresources/fengdatepicker/datepicker.min.css">
+        
+    </head>
+    <body>
+        <div style="width:100%"> <a href="/">[<<<]</a> </div>
+        {% include 'commonbar.twig' %}
+        <div style="width:100%">
+            <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
+            <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
+            <a href="/list?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
+        </div>
+        <table class="stat-data">
+            <thead> 
+                <tr> 
+                    <th class="stat-data" >&nbsp;</th> 
+                    <th class="stat-data" colspan="2"> {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
+                    <th class="stat-data" > {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
+                </tr>
+            </thead>
+            {% for scanagregated in scanlist %}
+            <tr class="stat-data"> 
+                <td class="stat-data">{{ singlescan.ID|default('-----')|e }}</td>
+                <td class="stat-data">[{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}]{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.FIELD1|default('-----')|e }} {{ singlescan.FIELD2|default('-----')|e }} {{ singlescan.FIELD3|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
+            </tr>
+            {% endfor %}
+            
+        </table>
+        
+        <script type="text/javascript">
+            var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
+            var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
+            function reformatDateSelectionURL() {
+                let newurl = "/list?from=";
+                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth()+1 < 10 ? '0' : '')+(firstdate.getMonth()+1) )+"."+firstdate.getFullYear();
+                newurl+="&to=";
+                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth()+1 < 10 ? '0' : '')+(seconddate.getMonth()+1) )+"."+seconddate.getFullYear();
+                
+                $("#filterbydate").attr("href", newurl);
+            }
+            $(function() {
+                $('[data-toggle="datepickerfrom"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["from"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      firstdate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+            $(function() {
+                $('[data-toggle="datepickerto"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["to"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      seconddate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+        </script>
+    </body>
+</html>

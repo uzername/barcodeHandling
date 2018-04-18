@@ -24,16 +24,15 @@
             <thead> 
                 <tr> 
                     <th class="stat-data" >&nbsp;</th> 
-                    <th class="stat-data" > {{localizedmessages['knownbarcode_id_header']|default('known barcode id')}} </th> 
-                    <th class="stat-data" > {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
+                    <th class="stat-data" colspan="2"> {{localizedmessages['rawbarcode_header']|default('sequence coded in barcode')}} </th> 
                     <th class="stat-data" > {{localizedmessages['scandatetime_header']|default('scanning date')}} </th> 
                 </tr>
             </thead>
             {% for singlescan in scanlist %}
             <tr class="stat-data"> 
                 <td class="stat-data">{{ singlescan.ID|default('-----')|e }}</td>
-                <td class="stat-data">{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}</td>
-                <td class="stat-data">{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
+                <td class="stat-data">[{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}]{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
+                <td class="stat-data">{{ singlescan.FIELD1|default('-----')|e }} {{ singlescan.FIELD2|default('-----')|e }} {{ singlescan.FIELD3|default('-----')|e }}</td>
                 <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
             </tr>
             {% endfor %}
@@ -45,9 +44,9 @@
             var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
             function reformatDateSelectionURL() {
                 let newurl = "/list?from=";
-                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth() < 10 ? '0' : '')+firstdate.getMonth() )+"."+firstdate.getFullYear();
+                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth()+1 < 10 ? '0' : '')+(firstdate.getMonth()+1) )+"."+firstdate.getFullYear();
                 newurl+="&to=";
-                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth() < 10 ? '0' : '')+seconddate.getMonth() )+"."+seconddate.getFullYear();
+                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth()+1 < 10 ? '0' : '')+(seconddate.getMonth()+1) )+"."+seconddate.getFullYear();
                 
                 $("#filterbydate").attr("href", newurl);
             }
