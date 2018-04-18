@@ -114,7 +114,13 @@ function prepareDataStructure($in_initialStruct) {
     $step1PreparedArray = sortArrayOfScannedItemsByBarcode($in_initialStruct);
     $previousValue = null;
     foreach ($step1PreparedArray as $value) { //array is monotonous
-        
+        if ($previousValue==NULL) {
+            $previousValue = $value->{"RAWBARCODE"};
+        } else {
+            if ($previousValue!=$value->{"RAWBARCODE"}) {
+                
+            }
+        }
     }
     return $resultStructure;
 }
