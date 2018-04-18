@@ -3,29 +3,23 @@
         <meta charset="UTF8">
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
          <style>
-
+           
         </style>
         <link rel="stylesheet" type="text/css" href="../webtemplatesresources/commonbar.css" >
-        <link rel="stylesheet" type="text/css" href="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick.css"> 
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
-        <script type="text/javascript" src="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick.min.js"> </script>
-        <script type="text/javascript" src="http://{{thishost}}/webtemplatesresources/datepicker/jquery.datepick-ru.min.js"></script>
-        <script type="text/javascript"> 
-        $('#startPicker,#endPicker').datepick({ onSelect: customRange, showTrigger: '<button type="button" class="trigger">...</button>'}); 
-            function customRange(dates) { 
-                if (this.id == 'startPicker') { 
-                    $('#endPicker').datepick('option', 'minDate', dates[0] || null); 
-                } 
-                else { 
-                    $('#startPicker').datepick('option', 'maxDate', dates[0] || null); 
-                } 
-            }
-        </script>
+        
+        <script type="text/javascript" src="../webtemplatesresources/fengdatepicker/datepicker.js"> </script>
+        <link rel="stylesheet" href="../webtemplatesresources/fengdatepicker/datepicker.min.css">
+        
     </head>
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
-        <input type="text" id="startPicker" size="10" class="is-datepick"> 
-        <input type="text" id="endPicker" size="10" class="is-datepick">
+        {% include 'commonbar.twig' %}
+        <div style="width:100%">
+            <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
+            <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
+            <a href="/list?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
+        </div>
         <table class="stat-data">
             <thead> 
                 <tr> 
@@ -45,5 +39,46 @@
             {% endfor %}
             
         </table>
+        
+        <script type="text/javascript">
+            var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
+            var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
+            function reformatDateSelectionURL() {
+                let newurl = "/list?from=";
+                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth() < 10 ? '0' : '')+firstdate.getMonth() )+"."+firstdate.getFullYear();
+                newurl+="&to=";
+                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth() < 10 ? '0' : '')+seconddate.getMonth() )+"."+seconddate.getFullYear();
+                
+                $("#filterbydate").attr("href", newurl);
+            }
+            $(function() {
+                $('[data-toggle="datepickerfrom"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["from"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      firstdate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+            $(function() {
+                $('[data-toggle="datepickerto"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["to"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      seconddate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+        </script>
     </body>
 </html>

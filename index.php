@@ -9,6 +9,13 @@ require_once './config_file.php';
 require_once './DatabaseHandler.php';
 require_once './localeHandler.php';
 
+//default date time format is d.m.Y
+
+function validateDate($date, $format = 'd.m.Y') {
+    $d = DateTime::createFromFormat($format, $date);
+    return $d && $d->format($format) == $date;
+}
+
 $app = new \Slim\App(['settings' => $config]);
 $container = $app->getContainer();
 // Register Twig View helper
@@ -99,7 +106,55 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $rawscanTimeValues = $dbInstance->listAllScanTime();
-    return $this->view->render($response, "listbarcode.twig",["scanlist"=>$rawscanTimeValues]);
+    $templateTransmission = [];
+    
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    }
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
+    if (isset($_GET) ) {
+        $dateStartString = null; $dateEndString = null;
+        
+        $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
+        $toDateEnabled = ( isset($_GET["to"])&& validateDate(urldecode($_GET["to"])) );
+        
+        if ($fromDateEnabled && $toDateEnabled) {
+            $dateStartString = urldecode($_GET["from"]); 
+            $dateEndString = urldecode($_GET["to"]);
+        }
+        if ( ($fromDateEnabled === TRUE) && ($toDateEnabled === FALSE) ) { //2nd date is to be used as current date
+            $dateStartString = urldecode($_GET["from"]); 
+            $tmplocaldate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocaldate->format("d.m.Y");
+        }
+        if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
+            $dateEndString = urldecode($_GET["to"]); 
+            $tmplocaldate = date_create_from_format("d.M.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
+            $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmpprevdate->format("d.m.Y");
+        }
+        if (($fromDateEnabled === FALSE) && ($toDateEnabled === FALSE)) {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
+        }
+    }
+    $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
+    $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
+    $templateTransmission["scanlist"] = $rawscanTimeValues;
+    $templateTransmission["datetime"]["from"] = $dateStartString;
+    $templateTransmission["datetime"]["to"] = $dateEndString;
+    
+    $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
+    $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);
+    
+    return $this->view->render($response, "listbarcode.twig",$templateTransmission);
 });
 
 $app->get('/registeredbarcodes[/]', function(Request $request, Response $response, array $args){

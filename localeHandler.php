@@ -35,6 +35,13 @@ class localeHandler {
             "registeredlistsingleeditbtn"=>"[Edit]",
             "registeredlistsinglesavebtn"=>"[Save]",
             ],
+        "page-scanlist"=>[
+            "rawbarcode_header"=>"Data in Barcode",
+            "scandatetime_header"=>"Time",
+            "fromdate"=>"Start Date",
+            "enddate"=>"End Date",
+            "filterbydate"=>"[By Date]"
+        ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
         ]
@@ -69,6 +76,14 @@ class localeHandler {
             "registeredlistsinglesavebtn"=>"[Сохранить]",
             "registeredlistnorawcode"=>"Данные в штрихкоде должны быть заполнены",
             
+            ],
+        
+        "page-scanlist"=>[
+            "rawbarcode_header"=>"Данные в штрихкоде",
+            "scandatetime_header"=>"Время",
+            "filterbydate"=>"[По дате]",
+            "fromdate"=>"Дата Начало",
+            "enddate"=>"Дата Окончание",
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"
