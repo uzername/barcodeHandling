@@ -117,7 +117,11 @@ function prepareDataStructure($in_initialStruct) {
         if ($previousValue==NULL) {
             $previousValue = $value->{"RAWBARCODE"};
         } else {
-            if ($previousValue!=$value->{"RAWBARCODE"}) {
+            if ($previousValue!=$value->{"RAWBARCODE"}) { 
+                $resultStructure[] = (object)[tableheader=>""];
+                $previousValue = $value->{"RAWBARCODE"};
+            } else {
+                $resultStructure[$resultStructure.length-1];
                 
             }
         }
