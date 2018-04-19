@@ -103,28 +103,50 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
 function sortArrayOfScannedItemsByBarcode($in_initialUnsortedStruct) {
     /// The comparison function must return an integer less than, equal to, or greater than zero if the first argument is considered to be respectively less than, equal to, or greater than the second
     function cmp($a, $b) {
-        return strcmp( $a->{'RAWBARCODE'}, $b->{'RAWBARCODE'} );
+        //return strcmp( $a->{'RAWBARCODE'}, $b->{'RAWBARCODE'} );
+        $stringcomparisonresult = strcmp( $a->{'RAWBARCODE'}, $b->{'RAWBARCODE'} );
+        if ($stringcomparisonresult < 0) {
+            return -2;
+        } elseif ($stringcomparisonresult == 0) {
+            $date1php = DateTime::createFromFormat('Y-m-d H:i:s', $a->{'SCANDATETIME'}, new DateTimeZone('Europe/Kiev'));
+            $date2php = DateTime::createFromFormat('Y-m-d H:i:s', $b->{'SCANDATETIME'}, new DateTimeZone('Europe/Kiev'));
+            if ($date1php < $date2php) {
+                return -1;
+            } elseif ($date1php > $date2php) {
+                return +1;
+            } else {
+                return 0;
+            }
+        } else {
+            return +2;
+        }
+        
+        
     }
     $out_sortedStruct = $in_initialUnsortedStruct;
     usort($out_sortedStruct, "cmp");
     return $out_sortedStruct;
 }
-function prepareDataStructure($in_initialStruct) {
+function prepareDataStructure($in_initialStruct) { //prepare scan history for displaying them in good way
     $resultStructure = [];
     $step1PreparedArray = sortArrayOfScannedItemsByBarcode($in_initialStruct);
-    $previousValue = null;
-    foreach ($step1PreparedArray as $value) { //array is monotonous
-        if ($previousValue==NULL) {
-            $previousValue = $value->{"RAWBARCODE"};
-        } else {
-            if ($previousValue!=$value->{"RAWBARCODE"}) { 
-                $resultStructure[] = (object)[tableheader=>""];
-                $previousValue = $value->{"RAWBARCODE"};
-            } else {
-                $resultStructure[$resultStructure.length-1];
-                
-            }
-        }
+    $previousValue = null; $previousDate = null;
+    $itercounter=0; $preparedArraySize = count($step1PreparedArray);
+    while ($itercounter<$preparedArraySize) { //array is monotonous by barcode data
+            $valueCurrent = $step1PreparedArray[$itercounter];
+            if ($previousValue!=$valueCurrent->{"RAWBARCODE"}) { //add new object to resulting structure
+                $resultStructure[] = (object)['tableheader'=>"", 'timedarray'=>[]];
+                $previousValue = $valueCurrent->{"RAWBARCODE"};
+                $resultStructure[count($resultStructure)-1]->{'tableheader'}="[".$valueCurrent->{'KNOWNBARCODE_ID'}.':'.$valueCurrent->{'RAWBARCODE'}.']'.$valueCurrent->{'FIELD1'}.' '.$valueCurrent->{'FIELD2'}.' '.$valueCurrent->{'FIELD3'};
+            } //else { //modify last added object
+                $currentDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $valueCurrent->{'SCANDATETIME'});
+                //$currentDate = date_time_set($currentDateTime, 0, 0, 1);
+                if (array_key_exists($currentDateTime->format("d.m.Y"), $resultStructure[count($resultStructure)-1]->{"timedarray"} ) == FALSE) {
+                    $resultStructure[count($resultStructure)-1]->{"timedarray"}[$currentDateTime->format("d.m.Y")]=[];
+                }
+                $resultStructure[count($resultStructure)-1]->{"timedarray"}[$currentDateTime->format("d.m.Y")][] = $currentDateTime->format("H:i:s");                     
+            //}        
+        $itercounter++; //to next record
     }
     return $resultStructure;
 }
@@ -380,6 +402,10 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     $barcodeslist = $dbInstance->listAllSelectedBarcodes($body->{'barcodeslist'});
     $templateTransmission["renderlist"] = $barcodeslist; $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
     return $this->view->render($response, "printpage.twig", $templateTransmission);
+});
+
+$app->post('/manualscanentry', function(Request $request, Response $response, array $args){
+    
 });
 $app->run();
 

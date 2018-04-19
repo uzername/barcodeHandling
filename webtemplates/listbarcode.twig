@@ -15,11 +15,12 @@
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         {% include 'commonbar.twig' %}
-        <div style="width:100%">
+        <div style="width:100%" style="margin-bottom:10px">
             <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
             <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
             <a href="/list?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
         </div>
+        <h4>{{localizedmessages["tableheader"]}}</h4>
         <table class="stat-data">
             <thead> 
                 <tr> 

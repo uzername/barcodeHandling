@@ -41,7 +41,9 @@ class localeHandler {
             "scandatetime_header"=>"Time",
             "fromdate"=>"Start Date",
             "enddate"=>"End Date",
-            "filterbydate"=>"[By Date]"
+            "filterbydate"=>"[By Date]",
+            "tableheader"=>"List of scanned items",
+            "tableheaderv2"=>"List of scanned items, v2"
         ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -86,6 +88,8 @@ class localeHandler {
             "filterbydate"=>"[По дате]",
             "fromdate"=>"Дата Начало",
             "enddate"=>"Дата Окончание",
+            "tableheader"=>"Список фактов сканирования штрихкода",
+            "tableheaderv2"=>"Список фактов сканирования штрихкода - сгрупирован, вариант 2",
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"

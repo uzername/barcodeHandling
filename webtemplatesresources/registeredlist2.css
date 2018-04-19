@@ -1,0 +1,31 @@
+.div-biglist-border {
+    border:solid black 1px;
+    margin: -1px;
+}
+#div-biglist-common {
+    font-family: monospace;
+    font-size: 10pt;
+}
+.div-biglist-nameheader {
+    width:100%;
+    font-weight:bold;
+}
+.div-biglist-alldates {
+    width:100%;
+    margin-left: 30px;
+}
+.div-biglist-date {
+    width:19.9%;
+    float:left;
+}
+.div-biglist-row {
+    width:100%;
+}
+.div-biglist-singletime {
+    width:50%;
+    float:left;
+    
+}
+.div-biglist-border-fix{
+    
+}
