@@ -47,6 +47,10 @@ class localeHandler {
         ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
+        ],
+        "page-restricted"=>[
+            "rprestricted"=>"This page should not be viewed by anyone (Only by authorized people)",
+            "rpexplain"=>"What is your job position?"
         ]
         ),
     "ru" => array(
@@ -93,6 +97,10 @@ class localeHandler {
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"
+        ],
+        "page-restricted"=>[
+            "rprestricted"=>"Эта страница не должна иметь возможность для публичного просмотра (только для некоторых людей)",
+            "rpexplain"=>"Введите сюда должность"
         ]
         )
     ];

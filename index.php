@@ -165,7 +165,7 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
     } else {
         $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
         $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
-    }
+    } 
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
     $templateTransmission['wayback'] = "/list/v2";
@@ -301,6 +301,12 @@ $app->get('/registeredbarcodes[/]', function(Request $request, Response $respons
         $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
         $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
     }
+    
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial'];
+    if (isset($_SESSION["login"])) {
+        $templateTransmission["login"]=$_SESSION["login"];
+    }
+    
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $registeredCodesSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-registeredbarcodes");
     $barcodeslist = $dbInstance->listAllBarcodes();
@@ -404,9 +410,10 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     return $this->view->render($response, "printpage.twig", $templateTransmission);
 });
 
-$app->post('/manualscanentry', function(Request $request, Response $response, array $args){
-    
+$app->post('/manualscanentry', function(Request $request, Response $response, array $args){ //type in entry manually
+    $body = json_decode( $request->getBody()->getContents() );
 });
+
 $app->run();
 
 ?>
