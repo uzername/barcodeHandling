@@ -61,6 +61,9 @@ $app->get('/',function(Request $request, Response $response, array $args){
         $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
         
     }
+    if (isset($_SESSION["login"])){
+        $templateTransmission["login"]=$_SESSION["login"];
+    }
     $mainpagesubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-main");
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $templateTransmission["localizedmessages"] = $mainpagesubarray+$commonsubarray;
@@ -473,6 +476,16 @@ $app->post('/processvalidation', function(Request $request, Response $response, 
             return $this->view->render($response, "protectpage.twig", $templateTransmission);
     }
 });
+// https://www.slimframework.com/docs/v3/objects/router.html#route-placeholders
+$app->get('/signoff/{accessrolepath}[/]', function(Request $request, Response $response, array $args) { 
+    session_start();
+    if (isset($_SESSION["login"])){
+        unset($_SESSION["login"]);
+    }
+    $paramValueWayBack = $request->getQueryParam('wayback');
+    return $response->withRedirect($paramValueWayBack."/");
+});
+
 $app->run();
 
 ?>

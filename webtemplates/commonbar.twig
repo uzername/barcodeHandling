@@ -1,5 +1,10 @@
             <div style="width:100%;text-align: right"> 
                 <div id="div-languages">  
+                    
+                    {% if login is defined %}
+                    <a href="/signoff/{{login}}?wayback={{wayback}}">[{{login}}]</a>
+                    {% endif %}
+                    
                     {% if lang is defined %}
                     
                     {% if lang == "en" %}
