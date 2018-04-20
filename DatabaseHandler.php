@@ -5,6 +5,7 @@
 class DataBaseHandler {
     public $scanHistoryTableName = "scanhistory";
     public $existingBarcodesTableName = "registeredbarcodes";
+    public $accessRolesTableName = "accessroles";
     public $pdoInstance;
     public function __construct($in_pdoInstance) {
         $this->pdoInstance = $in_pdoInstance;
@@ -14,17 +15,54 @@ class DataBaseHandler {
     }
     public function reCreateDataStructure() {
         $commandList = [
-            //TODO: store barcode type to table
             'Create table if not exists '.$this->existingBarcodesTableName.
             '(ID INTEGER PRIMARY KEY AUTOINCREMENT, PATHTOBARCODE TEXT, RAWBARCODEREGISTERED TEXT NOT NULL UNIQUE, FIELD1 TEXT, FIELD2 TEXT, FIELD3 TEXT, BARCODETYPE VARCHAR(10) )',
             
             'Create table if not exists '.$this->scanHistoryTableName.
-            '(ID INTEGER PRIMARY KEY AUTOINCREMENT, KNOWNBARCODE_ID INTEGER, RAWBARCODE TEXT, SCANDATETIME TEXT, FOREIGN KEY(KNOWNBARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) ON DELETE CASCADE ON UPDATE CASCADE )'
+            '(ID INTEGER PRIMARY KEY AUTOINCREMENT, KNOWNBARCODE_ID INTEGER, RAWBARCODE TEXT, SCANDATETIME TEXT, FOREIGN KEY(KNOWNBARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) ON DELETE CASCADE ON UPDATE CASCADE )',
+            
+            'Create table if not exists '.$this->accessRolesTableName.
+            '(ACCESSID INTEGER PRIMARY KEY AUTOINCREMENT, ACCESSROLE TEXT NOT NULL UNIQUE, LANGUAGE VARCHAR(3))'
         ];
         foreach ($commandList as $command) {
             $this->pdoInstance->exec($command);
         }
+        //predefined access roles
+        $predefinedAccessItems = [["accountant","en"], ["engineer","en"], ["бухгалтер","ru"], ["инженер","ru"]];
+        $predefinedAccessItemsCount = count($predefinedAccessItems);
+            $epicQuery = "SELECT DISTINCT ACCESSROLE FROM ".$this->accessRolesTableName." GROUP BY ACCESSROLE";
+            $stmt = $this->pdoInstance->prepare($epicQuery);
+            $stmt->execute();
+            $availableAccessRole=[];
+            while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $availableAccessRole[]=$row['ACCESSROLE'];
+            }    
+            foreach ( $predefinedAccessItems as $valuePredefined ) {
+                $itmaccessfound = FALSE;
+                foreach ($availableAccessRole as $valueFromQuery) {
+                    if ($valuePredefined[0]==$valueFromQuery) {
+                        $itmaccessfound = TRUE;
+                        break;
+                    }
+                }
+                if ($itmaccessfound == FALSE) { //add access item to table
+                $stmt2 = $this->pdoInstance->prepare("INSERT INTO ".$this->accessRolesTableName."(ACCESSROLE, LANGUAGE) VALUES (:accessrole, :lang)");
+                $stmt2->bindParam(":accessrole", $valuePredefined[0], PDO::PARAM_STR);
+                $stmt2->bindParam(":lang", $valuePredefined[1], PDO::PARAM_STR);
+                $stmt2->execute();
+                }
+            }      
     }
+    
+    public function validateAccessRole($inAccessRole) {
+        $stmt2 = $this->pdoInstance->prepare("SELECT COUNT(ACCESSID) as FOUND FROM ".$this->accessRolesTableName." WHERE ACCESSROLE = :accessrole");
+        $stmt2->bindParam(":accessrole", $inAccessRole, PDO::PARAM_STR);
+        $stmt2->execute();
+        while ($row=$stmt2->fetch(\PDO::FETCH_ASSOC)) {
+            return $row['FOUND'];
+        }
+    }
+    
     //it is possible to combine the following routine to a single one. In this case in saveScanTime parameter $inKnownBarcodeID is removed and query is rewritten as follows: https://stackoverflow.com/a/21152791
     public function obtainKnownBarcodeIDByText($inRawText) {
         $stmt = $this->pdoInstance->prepare("SELECT ID FROM registeredbarcodes WHERE RAWBARCODEREGISTERED = :rawtext");

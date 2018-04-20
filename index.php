@@ -302,12 +302,17 @@ $app->get('/registeredbarcodes[/]', function(Request $request, Response $respons
         $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
     }
     
-    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial'];
-    if (isset($_SESSION["login"])) {
-        $templateTransmission["login"]=$_SESSION["login"];
-    }
-    
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
+    if ($restrictaccessenabled) { //perform some page restriction handling
+        if (isset($_SESSION["login"])) {
+            $templateTransmission["login"]=$_SESSION["login"];
+        } else { //render restriction
+            $templateTransmission["waytoproceed"] = '/registeredbarcodes';
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+        }
+    }
     $registeredCodesSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-registeredbarcodes");
     $barcodeslist = $dbInstance->listAllBarcodes();
     $templateTransmission["registeredinfo"] = $barcodeslist;
@@ -367,7 +372,9 @@ $app->post("/updatecode",function(Request $request, Response $response, array $a
     $body = json_decode( $request->getBody()->getContents() );
     $barcodeData = $dbInstance->getSingleBarcodeTypeAndPathByID($body->{'barcodetomodify'}->{'ID'});
     //old barcode goes away
-    unlink(__DIR__.$barcodeData->{"PATHTOBARCODE"});
+    if(file_exists(__DIR__.$barcodeData->{"PATHTOBARCODE"})){
+        unlink(__DIR__.$barcodeData->{"PATHTOBARCODE"});
+    }
     //generate new barcode
     
      $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
@@ -393,7 +400,7 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = json_decode( $request->getBody()->getContents() );
-    
+    $templateTransmission = [];
     $privateLocaleHandler = new localeHandler();
     if (isset($_SESSION["lang"] )) {
         $templateTransmission["lang"] = $_SESSION["lang"];
@@ -403,7 +410,7 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     }
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-printpage");
     
-    $templateTransmission = [];
+    
     $templateTransmission["localizedlist"] = $langsubarray;
     $barcodeslist = $dbInstance->listAllSelectedBarcodes($body->{'barcodeslist'});
     $templateTransmission["renderlist"] = $barcodeslist; $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
@@ -414,6 +421,35 @@ $app->post('/manualscanentry', function(Request $request, Response $response, ar
     $body = json_decode( $request->getBody()->getContents() );
 });
 
+$app->post('/processvalidation', function(Request $request, Response $response, array $args){ 
+    //$body = json_decode( $request->getBody()->getContents() );
+    session_start();
+    $body = $request->getParsedBody();
+    $rawWayBack = $body['backurl'];
+    $rawPosition = $body['positioninput'];
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    
+    if ($dbInstance->validateAccessRole($rawPosition) > 0) { //validation passed, proceeding to page defined in rawWayBack
+        $_SESSION['login']=$rawPosition;
+        return $response->withRedirect($rawWayBack."/");
+    } else { //validation did not pass
+        $privateLocaleHandler = new localeHandler();
+        if (isset($_SESSION["lang"] )) {
+            $templateTransmission["lang"] = $_SESSION["lang"];
+        } else {
+            $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+            $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+        }
+        $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+        $templateTransmission["localizedmessages"] = $commonsubarray;
+        $templateTransmission["waytoproceed"] = $rawWayBack;
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+    }
+});
 $app->run();
 
 ?>

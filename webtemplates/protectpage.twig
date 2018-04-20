@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <link rel="stylesheet" type="text/css" href="../webtemplatesresources/protectpage.css">
+    </head>
+    <body>    
+        <div style="width:100%"> <a href="/">[<<<]</a> </div>
+        {% include 'commonbar.twig' %}
+        <div id="restricted-page">{{ localizedmessages['rprestricted']|default('This page should not be viewed by anyone (Only by authorized people)') }}</div>
+        <div id="restricted-page-explain">{{ localizedmessages['rpexplain']|default('What is your job position?') }}</div>
+        <div id="restricted-page-input">
+            <form method="POST" action="/processvalidation"> 
+                <input type="hidden" value="{{waytoproceed}}" name="backurl"> 
+                <input type="text" name="positioninput"> 
+                <input type="submit" value="[>>>]"> </form></div>
+    </body>
+</html>
