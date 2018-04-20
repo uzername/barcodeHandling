@@ -158,7 +158,7 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $templateTransmission = [];
-    
+    $templateTransmission['wayback'] = "/list/v2";
     $privateLocaleHandler = new localeHandler();
     if (isset($_SESSION["lang"] )) {
         $templateTransmission["lang"] = $_SESSION["lang"];
@@ -168,7 +168,19 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
     } 
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
-    $templateTransmission['wayback'] = "/list/v2";
+    
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
+    if ($restrictaccessenabled) { //perform some page restriction handling
+        if (isset($_SESSION["login"])) {
+            $templateTransmission["login"]=$_SESSION["login"];
+        } else { //render restriction
+            $translationSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-restricted");
+            $templateTransmission["localizedmessages"] = $commonsubarray+$translationSubarray;
+            $templateTransmission["waytoproceed"] = '/list/v2';
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+        }
+    }   
+    
         $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
     if (isset($_GET) ) {    //// date and time fiddling
         $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
@@ -226,7 +238,7 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     //$rawscanTimeValues = $dbInstance->listAllScanTime();
     
     $templateTransmission = [];
-    
+    $templateTransmission['wayback'] = "/list";
     $privateLocaleHandler = new localeHandler();
     if (isset($_SESSION["lang"] )) {
         $templateTransmission["lang"] = $_SESSION["lang"];
@@ -237,7 +249,17 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
 
-        $templateTransmission['wayback'] = "/list";
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
+    if ($restrictaccessenabled) { //perform some page restriction handling
+        if (isset($_SESSION["login"])) {
+            $templateTransmission["login"]=$_SESSION["login"];
+        } else { //render restriction
+            $translationSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-restricted");
+            $templateTransmission["localizedmessages"] = $commonsubarray+$translationSubarray;
+            $templateTransmission["waytoproceed"] = '/list';
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+        }
+    }   
 
     $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
     if (isset($_GET) ) {    //// date and time fiddling
@@ -300,8 +322,7 @@ $app->get('/registeredbarcodes[/]', function(Request $request, Response $respons
     } else {
         $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
         $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
-    }
-    
+    }    
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     
     $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
@@ -309,10 +330,13 @@ $app->get('/registeredbarcodes[/]', function(Request $request, Response $respons
         if (isset($_SESSION["login"])) {
             $templateTransmission["login"]=$_SESSION["login"];
         } else { //render restriction
+            $translationSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-restricted");
+            $templateTransmission["localizedmessages"] = $commonsubarray+$translationSubarray;
             $templateTransmission["waytoproceed"] = '/registeredbarcodes';
             return $this->view->render($response, "protectpage.twig", $templateTransmission);
         }
     }
+    
     $registeredCodesSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-registeredbarcodes");
     $barcodeslist = $dbInstance->listAllBarcodes();
     $templateTransmission["registeredinfo"] = $barcodeslist;
@@ -417,12 +441,11 @@ $app->post('/printpage', function(Request $request, Response $response, array $a
     return $this->view->render($response, "printpage.twig", $templateTransmission);
 });
 
-$app->post('/manualscanentry', function(Request $request, Response $response, array $args){ //type in entry manually
+$app->post('/manualscanentry', function(Request $request, Response $response, array $args){ //type in entry manually from admin interface
     $body = json_decode( $request->getBody()->getContents() );
 });
 
 $app->post('/processvalidation', function(Request $request, Response $response, array $args){ 
-    //$body = json_decode( $request->getBody()->getContents() );
     session_start();
     $body = $request->getParsedBody();
     $rawWayBack = $body['backurl'];
