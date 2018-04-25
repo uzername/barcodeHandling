@@ -1,5 +1,5 @@
 #div-languages {
-    font-family: monospace; font-weight: bold; font-size: 10pt; background-color: white;
+    font-family: monospace; font-weight: bold; font-size: 10pt; background-color: white; float:left;
 }
 body {
     margin:0; padding:0;

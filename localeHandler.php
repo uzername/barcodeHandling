@@ -9,7 +9,8 @@ class localeHandler {
         "common"=>["header"=>"SM_NM Scanner",
             "scannedlist"=>"[List Of registered Scans]",
             "registeredlist"=>"[List of Registered Barcodes]",
-            "scannedlist2"=>"[List Of registered Scans - Variant2]"
+            "scannedlist2"=>"[List Of registered Scans - Variant2]",
+            "optionsentry" => "[Options]"
             ],
         "page-main"=>[
             "invitation"=>"Scan some barcode!",
@@ -51,13 +52,17 @@ class localeHandler {
         "page-restricted"=>[
             "rprestricted"=>"This page should not be viewed by anyone (Only by authorized people)",
             "rpexplain"=>"What is your job position?"
+        ],
+        "page-options"=>[
+            "optscaption"=>"Here be options"
         ]
         ),
     "ru" => array(
         "common"=>["header"=>"SM_NM Сканнер",
             "scannedlist"=>"[Список отсканированных элементов]",
             "registeredlist"=>"[Список зарегистрированных элементов]",
-            "scannedlist2"=>"[Список отсканированных элементов - Вариант2]"
+            "scannedlist2"=>"[Список отсканированных элементов - Вариант2]",
+            "optionsentry" => "[Настройки]"
             ],
         "page-main"=>[
             "invitation"=>"Отсканируйте штрихкод!",
@@ -101,6 +106,9 @@ class localeHandler {
         "page-restricted"=>[
             "rprestricted"=>"Эта страница не должна иметь возможность для публичного просмотра (только для некоторых людей)",
             "rpexplain"=>"Введите сюда должность"
+        ],
+        "page-options"=>[
+            "optscaption"=>"Тут будут настройки для вычислений"
         ]
         )
     ];

@@ -1,0 +1,107 @@
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+         <style>
+           
+        </style>
+        <link rel="stylesheet" type="text/css" href="../../webtemplatesresources/commonbar.css" >
+        <link rel="stylesheet" type="text/css" href="../../webtemplatesresources/registeredlist2.css">
+        <script type="text/javascript" src="../../webtemplatesresources/jquery-3.3.1.min.js">  </script>
+        
+        <script type="text/javascript" src="../../webtemplatesresources/fengdatepicker/datepicker.js"> </script>
+        <link rel="stylesheet" href="../../webtemplatesresources/fengdatepicker/datepicker.min.css">
+        
+    </head>
+    <body>
+        <div style="width:100%"> <a href="/">[<<<]</a> 
+        </div>
+        {% include 'commonbar.twig' %}
+        <div style="width:100%" style="margin-bottom:10px">
+            <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
+            <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
+            <a href="/list/v2?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
+        </div>
+        <h4>{{localizedmessages["tableheaderv2"]}}</h4>
+        <div id="div-biglist-common" class="div-biglist-border">
+        {% for personitem in scanlist %}
+            <div class="div-biglist-nameheader div-biglist-border">
+                {{ personitem.tableheader }}
+            </div>
+            {# iterate through key-value array https://stackoverflow.com/a/10299532/5128696 #}
+            <div class="div-biglist-alldates clearfix div-biglist-border">
+                {# allow only 5 dates in single row. It is hardcoded, lol #}
+                {% set dateinrow = 1 %} {% set maxdatesinrow = 5 %}
+                {% for scandaykey,scantimevalue in personitem.timedarray.timelist %}
+                    {% if dateinrow == 0 %}
+                        <div class="div-biglist-multipledates-row div-biglist-border">
+                    {% endif %}
+                    <div class="div-biglist-date div-biglist-border">
+                        <div class="div-biglist-row div-biglist-border"> {{scandaykey}} </div>
+                        <div class="div-biglist-row clearfix div-biglist-border">
+                        {% for singletime in scantimevalue %}
+                            <div class="div-biglist-singletime div-biglist-border">
+                                {{singletime}}
+                            </div>
+                        {% endfor %}
+                        </div>
+                        <div class="div-biglist-date div-biglist-border"> 
+                            {{ personitem.timedarray.subtotaltime }}
+                        </div>
+                    </div>
+                    {% if dateinrow == 5 %}
+                        </div>
+                        {% set dateinrow = 1 %}
+                    {% else %}
+                        {% set dateinrow = dateinrow+1 %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="div-biglist-nameheader div-biglist-border">
+                {{ personitem.totaltime }}
+            </div>
+            
+        {% endfor %}
+        </div>
+        <script type="text/javascript">
+            var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
+            var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
+            function reformatDateSelectionURL() {
+                let newurl = "/list/v2?from=";
+                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth()+1 < 10 ? '0' : '')+(firstdate.getMonth()+1) )+"."+firstdate.getFullYear();
+                newurl+="&to=";
+                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth()+1 < 10 ? '0' : '')+(seconddate.getMonth()+1) )+"."+seconddate.getFullYear();
+                
+                $("#filterbydate").attr("href", newurl);
+            }
+            $(function() {
+                $('[data-toggle="datepickerfrom"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["from"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      firstdate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+            $(function() {
+                $('[data-toggle="datepickerto"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["to"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      seconddate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+        </script>
+    </body>
+</html>

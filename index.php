@@ -8,7 +8,7 @@ use \Psr\Http\Message\ResponseInterface as Response;
 require_once './config_file.php';
 require_once './DatabaseHandler.php';
 require_once './localeHandler.php';
-
+require_once './myDateTimeInterval.php';
 //default date time format is d.m.Y
 
 function validateDate($date, $format = 'd.m.Y') {
@@ -153,6 +153,42 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
     }
     return $resultStructure;
 }
+//include also timespan calculation in  datastructure for render
+//WICKED!
+function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule) {
+    $resultModifiedStructure = [];
+    $itercounter=0; $preparedArraySize = count($in_Structure);
+    while ($itercounter<$preparedArraySize) { //iterate over the whole structure
+       $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>""];
+       $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
+       $datespanTotal = new TotalHourspan();
+       foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>""];
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"} = $valuetimearray;
+           //sum up time between spans
+                  // http://fi2.php.net/manual/en/dateinterval.construct.php
+           //$datespanSubtotal = new DateInterval("P0000-00-00T00:00:00");
+           $datespanSubtotal = new TotalHourspan();
+           $intervalCounter = 0; $totaltimescount = count($valuetimearray); 
+           while ($intervalCounter<$totaltimescount-1) {
+               $value1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone('Europe/Kiev'));
+               $value2 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter+1], new DateTimeZone('Europe/Kiev'));
+               $intrvl = date_diff($value2, $value1);
+               
+               //sum up interval. Documentation does not show a built-in function
+               $datespanSubtotal->addDateIntervalToThis($intrvl); 
+               $intervalCounter+=2;
+           }
+           $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"subtotaltime"} = $datespanSubtotal->myToString();
+       }
+       $resultModifiedStructure[$itercounter]->{"totaltime"}=$datespanTotal->myToString();
+       
+       $itercounter++; //to next record
+    }
+    return $resultModifiedStructure;
+}
+
 ///*********************
 $app->get('/list/v2[/]', function(Request $request, Response $response, array $args){
     session_start();
@@ -220,16 +256,28 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
     $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
     $rawscanTimeValues = prepareDataStructure($rawscanTimeValues);
+          $preparedUseSchedule = $this->get('settings')['calculateTimeUseSchedule'];
+          $preparedCalculateTime = $this->get('settings')['calculateTime'];
+    if ($preparedCalculateTime == TRUE) {
+        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues,$preparedUseSchedule);
+    }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
     $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
-    $templateTransmission["scanlist"] = $rawscanTimeValues;
     $templateTransmission["datetime"]["from"] = $dateStartString;
     $templateTransmission["datetime"]["to"] = $dateEndString;
     
     $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
     $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);    
-    return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+    if ($preparedCalculateTime == FALSE) {
+        $templateTransmission["scanlist"] = $rawscanTimeValues;
+        return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+    } else {
+        $templateTransmission["scanlist"] = $updatedscanTimeValues;
+        return $this->view->render($response, "listbarcode2usetime.twig",$templateTransmission);
+        //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
+        //return $response->withHeader('Content-type', 'text/html')->write($debugLine);
+    }
 });
 
 $app->get('/list[/]', function(Request $request, Response $response, array $args){
@@ -346,6 +394,39 @@ $app->get('/registeredbarcodes[/]', function(Request $request, Response $respons
     $templateTransmission["localizedmessages"] = $commonsubarray+$registeredCodesSubarray;
 
     return $this->view->render($response, "registeredbarcodes.twig", $templateTransmission);
+});
+
+$app->get('/options[/]', function(Request $request, Response $response, array $args){ 
+    session_start();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    $templateTransmission['wayback'] = "/options";
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    }    
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
+    if ($restrictaccessenabled) { //perform some page restriction handling
+        if (isset($_SESSION["login"])) {
+            $templateTransmission["login"]=$_SESSION["login"];
+        } else { //render restriction
+            $translationSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-restricted");
+            $templateTransmission["localizedmessages"] = $commonsubarray+$translationSubarray;
+            $templateTransmission["waytoproceed"] = '/options';
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+        }
+    }
+    $optionsSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-options");
+    $templateTransmission["localizedmessages"] = $commonsubarray+$optionsSubarray;
+    
+    return $this->view->render($response, "options.twig", $templateTransmission);
 });
 
 $app->post('/newbarcode[/]', function(Request $request, Response $response, array $args){

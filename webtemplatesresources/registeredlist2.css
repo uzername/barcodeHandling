@@ -24,7 +24,7 @@
 .div-biglist-singletime {
     width:50%;
     float:left;
-    
+    min-width: 61px;
 }
 .div-biglist-border-fix{
     
