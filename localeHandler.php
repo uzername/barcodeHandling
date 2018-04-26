@@ -44,7 +44,8 @@ class localeHandler {
             "enddate"=>"End Date",
             "filterbydate"=>"[By Date]",
             "tableheader"=>"List of scanned items",
-            "tableheaderv2"=>"List of scanned items, v2"
+            "tableheaderv2"=>"List of scanned items, v2",
+            "scanlisttotal"=>"Total amount: ",
         ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -54,7 +55,8 @@ class localeHandler {
             "rpexplain"=>"What is your job position?"
         ],
         "page-options"=>[
-            "optscaption"=>"Here be options"
+            "optscaption"=>"Here be options",
+            "optsdefaultschedule"=>"Common Working Schedule"
         ]
         ),
     "ru" => array(
@@ -99,6 +101,7 @@ class localeHandler {
             "enddate"=>"Дата Окончание",
             "tableheader"=>"Список фактов сканирования штрихкода",
             "tableheaderv2"=>"Список фактов сканирования штрихкода - сгрупирован, вариант 2",
+            "scanlisttotal"=>"Всего: "
             ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"
@@ -108,7 +111,8 @@ class localeHandler {
             "rpexplain"=>"Введите сюда должность"
         ],
         "page-options"=>[
-            "optscaption"=>"Тут будут настройки для вычислений"
+            "optscaption"=>"Тут будут настройки для вычислений",
+            "optsdefaultschedule"=>"Обычный график работы"
         ]
         )
     ];

@@ -6,6 +6,7 @@ class DataBaseHandler {
     public $scanHistoryTableName = "scanhistory";
     public $existingBarcodesTableName = "registeredbarcodes";
     public $accessRolesTableName = "accessroles";
+    public $companyWorkTimeTableName = "companyworktime";
     public $pdoInstance;
     public function __construct($in_pdoInstance) {
         $this->pdoInstance = $in_pdoInstance;
@@ -13,6 +14,8 @@ class DataBaseHandler {
         
         $this->reCreateDataStructure();
     }
+    //https://www.sqlite.org/datatype3.html#date_and_time_datatype
+    //SQLite does not have a storage class set aside for storing dates and/or times. Instead, the built-in Date And Time Functions of SQLite are capable of storing dates and times as TEXT, REAL, or INTEGER values
     public function reCreateDataStructure() {
         $commandList = [
             'Create table if not exists '.$this->existingBarcodesTableName.
@@ -22,7 +25,10 @@ class DataBaseHandler {
             '(ID INTEGER PRIMARY KEY AUTOINCREMENT, KNOWNBARCODE_ID INTEGER, RAWBARCODE TEXT, SCANDATETIME TEXT, FOREIGN KEY(KNOWNBARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) ON DELETE CASCADE ON UPDATE CASCADE )',
             
             'Create table if not exists '.$this->accessRolesTableName.
-            '(ACCESSID INTEGER PRIMARY KEY AUTOINCREMENT, ACCESSROLE TEXT NOT NULL UNIQUE, LANGUAGE VARCHAR(3))'
+            '(ACCESSID INTEGER PRIMARY KEY AUTOINCREMENT, ACCESSROLE TEXT NOT NULL UNIQUE, LANGUAGE VARCHAR(3))',
+            
+            'Create table if not exists '.$this->companyWorkTimeTableName.
+            '(WORKID INTEGER PRIMARY KEY AUTOINCREMENT, DATEUSED TEXT NOT NULL , TIMESTART TEXT NOT NULL, TIMEEND TEXT NOT NULL)',
         ];
         foreach ($commandList as $command) {
             $this->pdoInstance->exec($command);
@@ -51,7 +57,48 @@ class DataBaseHandler {
                 $stmt2->bindParam(":lang", $valuePredefined[1], PDO::PARAM_STR);
                 $stmt2->execute();
                 }
-            }      
+            }
+        //predefined work schedules 
+        $predefinedScheduleItem = ["08:00", "16:30", "0001-01-02"];
+            $reconScheduleQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date";
+            $stmt3 = $this->pdoInstance->prepare($reconScheduleQuery);
+            $stmt3->bindParam(":date",$predefinedScheduleItem[2], PDO::PARAM_STR);
+            $stmt3->execute();
+            $count_itms=0;
+            while ($row=$stmt3->fetch(\PDO::FETCH_ASSOC)) {
+                $count_itms = $row['FOUND'];
+            }
+            if ($count_itms == 0) {//add this item
+                $this->addNewCompanyScheduleDay($predefinedScheduleItem);
+            }
+    }
+    //schedule
+    public function addNewCompanyScheduleDay($arrayNewSchedule) {
+        $insertScheduleQuery = "Insert Into ".$this->companyWorkTimeTableName."(TIMESTART, TIMEEND, DATEUSED) VALUES (:timestart, :timeend, :dateused)";
+        $stmt = $this->pdoInstance->prepare($insertScheduleQuery);
+        $stmt->bindParam(":timestart",$arrayNewSchedule[0], PDO::PARAM_STR);
+        $stmt->bindParam(":timeend",$arrayNewSchedule[1], PDO::PARAM_STR);
+        $stmt->bindParam(":dateused",$arrayNewSchedule[2], PDO::PARAM_STR);
+        try {
+            $stmt->execute();
+        } catch (PDOException $exc) {
+            return false;
+        }
+        return TRUE;
+    }
+    public function getDefaultCompanySchedule() {
+        $reconScheduleQuery = "SELECT * FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date";
+        $predefinedScheduleItemDate = "0001-01-02";
+        $stmt = $this->pdoInstance->prepare($reconScheduleQuery);
+        $stmt->bindParam(":date",$predefinedScheduleItemDate, PDO::PARAM_STR);
+        $stmt->execute();
+        $predefinedScheduleItem = ["TIMESTART"=>"", "TIMEEND"=>"", "DATEUSED"=>""];
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $predefinedScheduleItem["TIMESTART"] = $row['TIMESTART'];
+                $predefinedScheduleItem["TIMEEND"] = $row['TIMEEND'];
+                $predefinedScheduleItem["DATEUSED" ] = $row['DATEUSED'];
+                return $predefinedScheduleItem;
+        }
     }
     
     public function validateAccessRole($inAccessRole) {

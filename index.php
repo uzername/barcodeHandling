@@ -82,7 +82,7 @@ $app->get('/changelanguage[/]', function(Request $request, Response $response, a
 });
 
 $app->post('/recvbarcode[/]', function(Request $request, Response $response, array $args){
-    $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+    $localtime = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
     
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
@@ -155,15 +155,19 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
 }
 //include also timespan calculation in  datastructure for render
 //WICKED!
-function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule) {
+function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
     $resultModifiedStructure = [];
     $itercounter=0; $preparedArraySize = count($in_Structure);
     while ($itercounter<$preparedArraySize) { //iterate over the whole structure
        $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>""];
        $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
        $datespanTotal = new TotalHourspan();
+       $defaultScheduleToUse = [];
+       if ($in_injectedUseSchedule==TRUE) {
+            $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
+       }
        foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
-           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>""];
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>"", "additionalstatus"=>[]];
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"} = $valuetimearray;
            //sum up time between spans
                   // http://fi2.php.net/manual/en/dateinterval.construct.php
@@ -171,13 +175,26 @@ function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule) {
            $datespanSubtotal = new TotalHourspan();
            $intervalCounter = 0; $totaltimescount = count($valuetimearray); 
            while ($intervalCounter<$totaltimescount-1) {
-               $value1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone('Europe/Kiev'));
-               $value2 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter+1], new DateTimeZone('Europe/Kiev'));
+               $value1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
+               $value2 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter+1], new DateTimeZone($in_injectedLocalTimeZone));
                $intrvl = date_diff($value2, $value1);
                
                //sum up interval. Documentation does not show a built-in function
                $datespanSubtotal->addDateIntervalToThis($intrvl); 
                $intervalCounter+=2;
+           }
+           //if we are using this and we have exactly one item left in time array and day has finished already
+           if (($in_injectedUseSchedule==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
+               $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
+               $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
+               $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
+               if ($intrvl2->d!=0) {
+                   $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+                   //if a remaining unprocessed datetime remains beyond the end of day then discard it.
+                   $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
+                   $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"}[] = $defaultScheduleToUse["TIMEEND"].':00';
+                   $datespanSubtotal->addDateIntervalToThis($intrvl3); 
+               }
            }
            $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"subtotaltime"} = $datespanSubtotal->myToString();
@@ -231,35 +248,43 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
         }
         if ( ($fromDateEnabled === TRUE) && ($toDateEnabled === FALSE) ) { //2nd date is to be used as current date
             $dateStartString = urldecode($_GET["from"]); 
-            $tmplocaldate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocaldate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocaldate->format("d.m.Y");
         }
         if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
             $dateEndString = urldecode($_GET["to"]); 
-            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
+            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
             $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
             $dateStartString = $tmpprevdate->format("d.m.Y");
         }
         if (($fromDateEnabled === FALSE) && ($toDateEnabled === FALSE)) {
-            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocalenddate->format("d.m.Y");
             $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
         }
     } else {
-            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocalenddate->format("d.m.Y");
             $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
     }
-    $sqlitedateStart = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone('Europe/Kiev'))->format("Y-m-d");
-    $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
+    $time1 = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone($this->get('settings')['timezonestring']));
+    $time2 = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
+    if ($time2<$time1) {
+        $time3= $time1;
+        $time1 = $time2;
+        $time2 = $time3;
+    }
+    $sqlitedateStart = date_time_set($time1,00,01)->format("Y-m-d H:i");
+    $sqlitedateEnd = date_time_set($time2,23,59)->format("Y-m-d H:i");
+    
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
     $rawscanTimeValues = prepareDataStructure($rawscanTimeValues);
           $preparedUseSchedule = $this->get('settings')['calculateTimeUseSchedule'];
           $preparedCalculateTime = $this->get('settings')['calculateTime'];
     if ($preparedCalculateTime == TRUE) {
-        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues,$preparedUseSchedule);
+        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues,$preparedUseSchedule, $dbInstance, $this->get('settings')['timezonestring'] );
     }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
@@ -323,29 +348,36 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
         }
         if ( ($fromDateEnabled === TRUE) && ($toDateEnabled === FALSE) ) { //2nd date is to be used as current date
             $dateStartString = urldecode($_GET["from"]); 
-            $tmplocaldate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocaldate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocaldate->format("d.m.Y");
         }
         if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
             $dateEndString = urldecode($_GET["to"]); 
-            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev'));
+            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
             $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
             $dateStartString = $tmpprevdate->format("d.m.Y");
         }
         if (($fromDateEnabled === FALSE) && ($toDateEnabled === FALSE)) {
-            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocalenddate->format("d.m.Y");
             $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
         }
     } else {
-            $tmplocalenddate = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
             $dateEndString = $tmplocalenddate->format("d.m.Y");
             $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
             $dateStartString = $tmplocalstartdate->format("d.m.Y");
     }
-    $sqlitedateStart = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone('Europe/Kiev'))->format("Y-m-d");
-    $sqlitedateEnd = date_time_set(date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone('Europe/Kiev')),23,59)->format("Y-m-d H:i");
+    $time1 = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone($this->get('settings')['timezonestring']));
+    $time2 = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
+    if ($time2<$time1) {
+        $time3= $time1;
+        $time1 = $time2;
+        $time2 = $time3;
+    }
+    $sqlitedateStart = date_time_set($time1,00,01)->format("Y-m-d H:i");
+    $sqlitedateEnd = date_time_set($time2,23,59)->format("Y-m-d H:i");
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
 
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
@@ -426,6 +458,9 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
     $optionsSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-options");
     $templateTransmission["localizedmessages"] = $commonsubarray+$optionsSubarray;
     
+    $defaultScheduleArray = $dbInstance->getDefaultCompanySchedule();
+    $templateTransmission["defaultschedule"] = $defaultScheduleArray;
+    
     return $this->view->render($response, "options.twig", $templateTransmission);
 });
 
@@ -441,7 +476,7 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
         $newResponse = $newResponse->withJson($data)->withStatus(200);
         return $newResponse;
     }
-     $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+     $localtime = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
      //how should we refer to this image on site
      $subpathToBarcode = "/data/barcodes/".$body->{'newbarcode'}."_".$localtime->format('Ymd_His')."_".$body->{'barcodetype'}.".svg";
      //how we should refr to this image on disk
@@ -485,7 +520,7 @@ $app->post("/updatecode",function(Request $request, Response $response, array $a
     }
     //generate new barcode
     
-     $localtime = new DateTime("now", new DateTimeZone('Europe/Kiev'));
+     $localtime = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
      //how should we refer to this image on site
      $subpathToBarcode = "/data/barcodes/".$body->{'barcodetomodify'}->{'rawbarcode'}."_".$localtime->format('Ymd_His')."_".$barcodeData->{"BARCODETYPE"}.".svg";
      //how we should refr to this image on disk

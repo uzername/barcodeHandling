@@ -1,11 +1,16 @@
 <html>
     <head>
         <meta charset="UTF8">
+        <link rel="stylesheet" type="text/css" href="../../webtemplatesresources/commonbar.css" >
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
     </head>
     <body>
+        <div style="width:100%"> <a href="/">[<<<]</a> </div>
         {% include 'commonbar.twig' %}
         <h4> {{ localizedmessages['optscaption']|default('Settings page') }} </h4>
-        
+        <div> 
+        <p> {{ localizedmessages['optsdefaultschedule'] }} </p>
+        <p> {{defaultschedule["TIMESTART"]}} ... {{defaultschedule["TIMEEND"]}} </p>
+        </div>
     </body>
 </html>

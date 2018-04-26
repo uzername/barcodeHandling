@@ -23,30 +23,30 @@
             <a href="/list/v2?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
         </div>
         <h4>{{localizedmessages["tableheaderv2"]}}</h4>
-        <div id="div-biglist-common" class="div-biglist-border">
+        <div id="div-biglist-common" class="div-biglist-border" >
         {% for personitem in scanlist %}
-            <div class="div-biglist-nameheader div-biglist-border">
+            <div class="div-biglist-nameheader div-biglist-border" >
                 {{ personitem.tableheader }}
             </div>
             {# iterate through key-value array https://stackoverflow.com/a/10299532/5128696 #}
-            <div class="div-biglist-alldates clearfix div-biglist-border">
+            <div class="div-biglist-alldates clearfix div-biglist-border" >
                 {# allow only 5 dates in single row. It is hardcoded, lol #}
                 {% set dateinrow = 1 %} {% set maxdatesinrow = 5 %}
-                {% for scandaykey,scantimevalue in personitem.timedarray.timelist %}
+                {% for scandaykey,scantimevalue in personitem.timedarray %}
                     {% if dateinrow == 0 %}
                         <div class="div-biglist-multipledates-row div-biglist-border">
                     {% endif %}
-                    <div class="div-biglist-date div-biglist-border">
-                        <div class="div-biglist-row div-biglist-border"> {{scandaykey}} </div>
+                    <div class="div-biglist-date div-biglist-border" >
+                        <div class="div-biglist-row div-biglist-border" > {{scandaykey}} </div>
                         <div class="div-biglist-row clearfix div-biglist-border">
-                        {% for singletime in scantimevalue %}
-                            <div class="div-biglist-singletime div-biglist-border">
+                        {% for singletime in scantimevalue.timelist %}
+                            <div class="div-biglist-singletime div-biglist-border" >
                                 {{singletime}}
                             </div>
                         {% endfor %}
                         </div>
-                        <div class="div-biglist-date div-biglist-border"> 
-                            {{ personitem.timedarray.subtotaltime }}
+                        <div class="div-biglist-date" style="text-align: center; color:green; width:100%"> 
+                            {{ scantimevalue.subtotaltime }}
                         </div>
                     </div>
                     {% if dateinrow == 5 %}
@@ -58,7 +58,7 @@
                 {% endfor %}
             </div>
             <div class="div-biglist-nameheader div-biglist-border">
-                {{ personitem.totaltime }}
+                {{localizedmessages["scanlisttotal"]}} {{ personitem.totaltime }}
             </div>
             
         {% endfor %}
