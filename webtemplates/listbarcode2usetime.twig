@@ -39,10 +39,19 @@
                     <div class="div-biglist-date div-biglist-border" >
                         <div class="div-biglist-row div-biglist-border" > {{scandaykey}} </div>
                         <div class="div-biglist-row clearfix div-biglist-border">
+                            {% set singletimemax = scantimevalue.timelist|length-1 %}
+                            {% set singletimecntr = 0 %}
                         {% for singletime in scantimevalue.timelist %}
-                            <div class="div-biglist-singletime div-biglist-border" >
+                            {% set singletimecntr = singletimecntr+1 %}
+                            {% if ((singletimecntr == singletimemax)and(personitem.additionalstatus is defined)and(personitem.additionalstatus[0] == "closedate"))%}
+                                {% set styleline="style=\"background-color: lightgray\"" %}
+                            {% else %}
+                                {% set styleline="style=\"background-color: white\"" %}
+                            {% endif %}
+                            <div class="div-biglist-singletime div-biglist-border {{styleline}}"  >
                                 {{singletime}}
                             </div>
+                            
                         {% endfor %}
                         </div>
                         <div class="div-biglist-date" style="text-align: center; color:green; width:100%"> 

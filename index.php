@@ -166,7 +166,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
        $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
        $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
        $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
-       if ($injectedUseSchedule==TRUE) {
+       if (filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE) {
             $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
        }
        foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
@@ -187,7 +187,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                $intervalCounter+=2;
            }
            //if we are using this and we have exactly one item left in time array and day has finished already
-           if (($injectedUseSchedule==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
+           if ((filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
                $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
                $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
                $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
@@ -197,6 +197,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                    $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
                    $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"}[] = $defaultScheduleToUse["TIMEEND"].':00';
                    $datespanSubtotal->addDateIntervalToThis($intrvl3); 
+                   $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[0]="closedate";
                }
            }
            $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
@@ -287,7 +288,7 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
           $preparedUseSchedule = $this->get('settings')['calculateTimeUseSchedule'];
           $preparedCalculateTime = $this->get('settings')['calculateTime'];
     if ($preparedCalculateTime == TRUE) {
-        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues/*,$preparedUseSchedule*/, $dbInstance, $this->get('settings')['timezonestring'] );
+        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues, $dbInstance, $this->get('settings')['timezonestring'] );
     }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
