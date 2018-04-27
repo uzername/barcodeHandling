@@ -155,7 +155,7 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
 }
 //include also timespan calculation in  datastructure for render
 //WICKED!
-function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
+function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
     $resultModifiedStructure = [];
     $itercounter=0; $preparedArraySize = count($in_Structure);
     while ($itercounter<$preparedArraySize) { //iterate over the whole structure
@@ -163,7 +163,10 @@ function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule, Dat
        $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
        $datespanTotal = new TotalHourspan();
        $defaultScheduleToUse = [];
-       if ($in_injectedUseSchedule==TRUE) {
+       $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
+       $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
+       $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
+       if ($injectedUseSchedule==TRUE) {
             $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
        }
        foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
@@ -184,7 +187,7 @@ function calculateHoursDataStructure($in_Structure, $in_injectedUseSchedule, Dat
                $intervalCounter+=2;
            }
            //if we are using this and we have exactly one item left in time array and day has finished already
-           if (($in_injectedUseSchedule==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
+           if (($injectedUseSchedule==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
                $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
                $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
                $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
@@ -284,7 +287,7 @@ $app->get('/list/v2[/]', function(Request $request, Response $response, array $a
           $preparedUseSchedule = $this->get('settings')['calculateTimeUseSchedule'];
           $preparedCalculateTime = $this->get('settings')['calculateTime'];
     if ($preparedCalculateTime == TRUE) {
-        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues,$preparedUseSchedule, $dbInstance, $this->get('settings')['timezonestring'] );
+        $updatedscanTimeValues = calculateHoursDataStructure($rawscanTimeValues/*,$preparedUseSchedule*/, $dbInstance, $this->get('settings')['timezonestring'] );
     }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
@@ -460,8 +463,24 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
     
     $defaultScheduleArray = $dbInstance->getDefaultCompanySchedule();
     $templateTransmission["defaultschedule"] = $defaultScheduleArray;
+    //$uwschd = $this->get('settings')['calculateTimeUseSchedule'];
+    //$utlwd = $this->get('settings')["calculateTimeLimitedByWorkDay"];
+    $commonconfigarray = $dbInstance->getExistingSettings();
+    $templateTransmission["commonconfig"] = ["UWSchd"=>filter_var($commonconfigarray["USESCHEDULE"],FILTER_VALIDATE_BOOLEAN), "UTLWrkDay"=>filter_var($commonconfigarray["LIMITBYWORKDAYTIME"],FILTER_VALIDATE_BOOLEAN)];
     
     return $this->view->render($response, "options.twig", $templateTransmission);
+});
+
+$app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $body = $request->getParsedBody();
+    $arrayToUse = ["timestart"=>$body["timestart"], "timeend"=>$body["timeend"], "dateused"=>"0001-01-02"];
+    $dbInstance->updateCompanySchedule($arrayToUse);
+    $dbInstance->updateSettings(["USESCHEDULE"=>isset($body["useschedule"]) ? 1 : 0, "LIMITBYWORKDAYTIME"=>isset($body["limitbyworkdaytime"]) ? 1 : 0 ]);
+    return $response->withRedirect('/options');
 });
 
 $app->post('/newbarcode[/]', function(Request $request, Response $response, array $args){
@@ -601,6 +620,7 @@ $app->get('/signoff/{accessrolepath}[/]', function(Request $request, Response $r
     $paramValueWayBack = $request->getQueryParam('wayback');
     return $response->withRedirect($paramValueWayBack."/");
 });
+
 
 $app->run();
 

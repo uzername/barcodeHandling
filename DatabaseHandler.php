@@ -7,6 +7,7 @@ class DataBaseHandler {
     public $existingBarcodesTableName = "registeredbarcodes";
     public $accessRolesTableName = "accessroles";
     public $companyWorkTimeTableName = "companyworktime";
+    public $settingsTableName = "assortedsettings";
     public $pdoInstance;
     public function __construct($in_pdoInstance) {
         $this->pdoInstance = $in_pdoInstance;
@@ -29,6 +30,9 @@ class DataBaseHandler {
             
             'Create table if not exists '.$this->companyWorkTimeTableName.
             '(WORKID INTEGER PRIMARY KEY AUTOINCREMENT, DATEUSED TEXT NOT NULL , TIMESTART TEXT NOT NULL, TIMEEND TEXT NOT NULL)',
+            
+            'Create table if not exists '.$this->settingsTableName.
+            '(USESCHEDULE INTEGER NOT NULL, LIMITBYWORKDAYTIME INTEGER NOT NULL)'
         ];
         foreach ($commandList as $command) {
             $this->pdoInstance->exec($command);
@@ -71,9 +75,26 @@ class DataBaseHandler {
             if ($count_itms == 0) {//add this item
                 $this->addNewCompanyScheduleDay($predefinedScheduleItem);
             }
+        //predefined  settings
+        $predefinedSettingsItem = ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>0];
+            $reconSettingsQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->settingsTableName;
+            $stmt4 = $this->pdoInstance->prepare($reconSettingsQuery);
+            $stmt4->execute();
+            $count_itms2=0;
+            while ($row=$stmt4->fetch(\PDO::FETCH_ASSOC)) {
+                $count_itms2 = $row['FOUND'];
+            }
+            if ($count_itms2 == 0) {//add this item
+                $this->addNewSettings($predefinedSettingsItem);
+            }
     }
-    //schedule
-    public function addNewCompanyScheduleDay($arrayNewSchedule) {
+    //!!schedule
+    /**
+     * A default company's work schedule is the one which relates to date 0001-01-02
+     * @param array $arrayNewSchedule associative array with at least 3 items: time start and time end and date;
+     * @return boolean the addition went smoothly
+     */
+    public function addNewCompanyScheduleDay(array $arrayNewSchedule) {
         $insertScheduleQuery = "Insert Into ".$this->companyWorkTimeTableName."(TIMESTART, TIMEEND, DATEUSED) VALUES (:timestart, :timeend, :dateused)";
         $stmt = $this->pdoInstance->prepare($insertScheduleQuery);
         $stmt->bindParam(":timestart",$arrayNewSchedule[0], PDO::PARAM_STR);
@@ -99,6 +120,50 @@ class DataBaseHandler {
                 $predefinedScheduleItem["DATEUSED" ] = $row['DATEUSED'];
                 return $predefinedScheduleItem;
         }
+    }
+    /**
+     * A default company's work schedule is the one which relates to date 0001-01-02
+     * @param array $in_CompanySchedule - associative array with at least 3 keys: "timestart" and "timeend" and "dateused";
+     *  values should conform to regex \d\d:\d\d
+     */
+    public function updateCompanySchedule(array $in_CompanySchedule) {
+        $updateQuery = "UPDATE ".$this->companyWorkTimeTableName." SET TIMESTART=:timestart, TIMEEND=:timeend WHERE DATEUSED=:in_date"; 
+        $stmt = $this->pdoInstance->prepare($updateQuery);
+        $stmt->bindParam(":timestart",$in_CompanySchedule["timestart"], PDO::PARAM_STR);
+        $stmt->bindParam(":timeend",$in_CompanySchedule["timeend"], PDO::PARAM_STR);
+        $stmt->bindParam(":in_date",$in_CompanySchedule["dateused"], PDO::PARAM_STR);
+        $stmt->execute();
+    }
+    //!!additional settings
+    /**
+     * 
+     * @param array $in_newSettings an example: ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>0] 
+     */
+    public function addNewSettings(array $in_newSettings) {
+        $insertSettingsQuery = "Insert Into ".$this->settingsTableName."(USESCHEDULE, LIMITBYWORKDAYTIME) VALUES (:param1, :param2)";
+        $stmt = $this->pdoInstance->prepare($insertSettingsQuery);
+        $stmt->bindParam(":param1",$in_newSettings["USESCHEDULE"], PDO::PARAM_INT);
+        $stmt->bindParam(":param2",$in_newSettings["LIMITBYWORKDAYTIME"], PDO::PARAM_STR);
+        $stmt->execute();
+    }
+    public function getExistingSettings() {
+        $selectSettingsQuery = "Select * FROM ".$this->settingsTableName;
+        $stmt = $this->pdoInstance->prepare($selectSettingsQuery);
+        $stmt->execute();
+        $predefinedSettingsItem = ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>0];
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $predefinedSettingsItem["USESCHEDULE"] = $row["USESCHEDULE"];
+            $predefinedSettingsItem["LIMITBYWORKDAYTIME"] = $row["LIMITBYWORKDAYTIME"];
+            return $predefinedSettingsItem;
+        }
+        
+        }
+    public function updateSettings(array $in_newSettings) {
+        $updateQuery = "UPDATE ".$this->settingsTableName." SET USESCHEDULE=:param1, LIMITBYWORKDAYTIME=:param2"; 
+        $stmt= $this->pdoInstance->prepare($updateQuery);
+        $stmt->bindParam(":param1",$in_newSettings["USESCHEDULE"], PDO::PARAM_INT);
+        $stmt->bindParam(":param2",$in_newSettings["LIMITBYWORKDAYTIME"], PDO::PARAM_INT);
+        $stmt->execute();
     }
     
     public function validateAccessRole($inAccessRole) {
