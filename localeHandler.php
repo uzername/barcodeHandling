@@ -48,6 +48,13 @@ class localeHandler {
             "tableheaderv2"=>"List of scanned items, v2",
             "scanlisttotal"=>"Total amount: ",
         ],
+        "pageform-scanlist"=>[
+            "pageform_remove"=>"[remove]",
+            "pageform_edit"=>"[edit]",
+            "pageform_captionnew"=>"New Entry",
+            "pageform_captionedit"=>"Edit Entry",
+            "pageform_apply"=>"apply changes"
+        ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
         ],
@@ -108,6 +115,13 @@ class localeHandler {
             "tableheaderv2"=>"Список фактов сканирования штрихкода - сгрупирован, вариант 2",
             "scanlisttotal"=>"Всего: "
             ],
+        "pageform-scanlist"=>[
+            "pageform_remove"=>"[Убрать запись]",
+            "pageform_edit"=>"[Править запись]",
+            "pageform_captionnew"=>"Новая запись",
+            "pageform_captionedit"=>"Исправьте запись",
+            "pageform_apply"=>"внести изменения"
+        ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"
         ],

@@ -186,13 +186,14 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                $datespanSubtotal->addDateIntervalToThis($intrvl); 
                $intervalCounter+=2;
            }
-           //if we are using this and we have exactly one item left in time array and day has finished already
+           //if we are using this and we have exactly one item left in time array and day has finished already (we are not working with the current day)
            if ((filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
                $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
                $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
                $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
-               if ($intrvl2->d!=0) {
-                   $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+               $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+               if (($intrvl2->d!=0)&&($endOfDay>=$dateMissed) ){
+                   
                    //if a remaining unprocessed datetime remains beyond the end of day then discard it.
                    $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
                    $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"}[] = $defaultScheduleToUse["TIMEEND"].':00';
@@ -328,6 +329,7 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     }
     $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
     $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
+    $langsubarray2 = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],  "pageform-scanlist");
 
     $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
     if ($restrictaccessenabled) { //perform some page restriction handling
@@ -384,7 +386,9 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     $sqlitedateEnd = date_time_set($time2,23,59)->format("Y-m-d H:i");
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
 
-    $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray;
+    $templateTransmission["barcodeentrylistfrm"] = $dbInstance->listAllBarcodes();
+    
+    $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray+$langsubarray2;
     $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
     $templateTransmission["scanlist"] = $rawscanTimeValues;
     $templateTransmission["datetime"]["from"] = $dateStartString;

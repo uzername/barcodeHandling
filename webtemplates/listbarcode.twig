@@ -11,13 +11,22 @@
         <script type="text/javascript" src="../webtemplatesresources/fengdatepicker/datepicker.js"> </script>
         <link rel="stylesheet" href="../webtemplatesresources/fengdatepicker/datepicker.min.css">
         
+        <link rel="stylesheet" type="text/css" href='../webtemplatesresources/timepicker/jquery.timepicker.min.css' >
+        <script type="text/javascript" src="../webtemplatesresources/timepicker/jquery.timepicker.min.js">  </script>
+        
+        <script type="text/javascript"> 
+            function invokeAction(in_entry) {
+                console.log(in_entry);
+            }
+        </script>
     </head>
     <body>
         <div style="width:100%"> 
             <a href="/">[<<<]</a>
         </div>
         {% include 'commonbar.twig' %}
-        <div style="width:100%" style="margin-bottom:10px">
+        {% include 'manualScanEvtSubtemplatePart1.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm'} %}
+        <div style="width:100%; margin-bottom:10px; border-top:1px dotted black">
             <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
             <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
             <a href="/list?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
@@ -37,6 +46,9 @@
                 <td class="stat-data">[{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}]{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
                 <td class="stat-data">{{ singlescan.FIELD1|default('-----')|e }} {{ singlescan.FIELD2|default('-----')|e }} {{ singlescan.FIELD3|default('-----')|e }}</td>
                 <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
+                <td> <input type="button" value="{{localizedmessages["pageform_edit"]|default("[Edit]")}}" data-editbtn-id="{{singlescan.ID}}" data-editbtn-mode="edit" onclick="invokeAction(this);"> 
+                     <input type="button" value="{{localizedmessages["pageform_remove"]|default("[Remove]")}}" data-editbtn-id="{{singlescan.ID}}" data-editbtn-mode="remove" onclick="invokeAction(this);"> 
+                </td>
             </tr>
             {% endfor %}
             
@@ -81,6 +93,7 @@
                   }
                 });
             });
+            {% include 'manualScanEvtSubtemplatePart2.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm'} %}
         </script>
     </body>
 </html>

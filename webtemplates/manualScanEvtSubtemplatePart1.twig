@@ -1,0 +1,15 @@
+{# Add manually scan entry #}
+<div style="width:220px">
+    <p style="margin: 0">{{localizedmessages["pageform_captionnew"]}}</p>
+    <form>
+        <input type="text" id="{{frmdatepickuniqueID}}" name="{{frmdatepickuniqueID}}" data-toggle="{{frmdatepickuniqueID}}" style="width: 105px" readonly="readonly" > 
+        <input id="{{frmtimepickuniqueID}}" name="{{frmtimepickuniqueID}}" type="text" class="time" style="width: 105px"/> <br/>
+        <select style="width:210px" id="{{frmentitypickuniqueID}}">
+            <option value="">...</option>
+            {% for singlebarcodeentryobj in barcodeentrylistfrm %}
+                <option value="{{singlebarcodeentryobj.ID}}">{{singlebarcodeentryobj.FIELD1|default("_")}} {{singlebarcodeentryobj.FIELD2|default("_")}} {{singlebarcodeentryobj.FIELD3|default("_")}}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="{{localizedmessages["pageform_apply"]|default("[>>>]")}}">
+    </form>
+</div>

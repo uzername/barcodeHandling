@@ -1,0 +1,15 @@
+{# JS declarations for Scan Item (manual entry) #}
+            $(function() {
+                $('[data-toggle="{{frmdatepickuniqueID}}"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  pick: function(evt) {
+
+                  }
+                });
+            });
+            $(function() {
+                $('#{{frmtimepickuniqueID}}').timepicker({'timeFormat': 'H:i'});
+            });
