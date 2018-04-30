@@ -10,6 +10,7 @@
                 <option value="{{singlebarcodeentryobj.ID}}">{{singlebarcodeentryobj.FIELD1|default("_")}} {{singlebarcodeentryobj.FIELD2|default("_")}} {{singlebarcodeentryobj.FIELD3|default("_")}}</option>
             {% endfor %}
         </select>
+        <input type="hidden" name="currentscanrecord" >
             <input type="submit" value="{{localizedmessages["pageform_apply"]|default("[>>>]")}}" data-btnusage="{{frmusage}}">
     </form>
 </div>

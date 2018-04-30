@@ -326,4 +326,8 @@ class DataBaseHandler {
         return null;
     }
 
+    public function updateScanRecord($rcrdToUpdate, $datePickupdItem, $timePickupdItem, $entityIDupdItem) {
+        
+    }
+
 }

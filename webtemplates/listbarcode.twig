@@ -3,7 +3,9 @@
         <meta charset="UTF8">
         <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
          <style>
-           
+             div#edit-itm-rootdivform {
+                 display: none; 
+             }
         </style>
         <link rel="stylesheet" type="text/css" href="../webtemplatesresources/commonbar.css" >
         <script type="text/javascript" src="../webtemplatesresources/jquery-3.3.1.min.js">  </script>
@@ -19,8 +21,36 @@
         
         <script type="text/javascript"> 
             function invokeAction(in_entry) {
-                $.featherlight("+++",{type:'text'});
-                console.log(in_entry);
+                //Example of featherlight: $.featherlight("+++",{type:'text'});
+                //indicates what action does this button do
+                var btnModificator = in_entry.dataset.editbtnMode;
+                //what entry in scan history table does it relate to...
+                var btnID = in_entry.dataset.editbtnId;
+                console.log(in_entry.dataset);
+                switch(btnModificator) {
+                    case "edit": {
+                        let scanentryID=in_entry.dataset.editbtnEntityid;
+                        let scanentryDateTimeArray=in_entry.dataset.editbtnEntitydatetime.split(" ");
+                        let scanentryDate = scanentryDateTimeArray[0];
+                        let scanentryTime = scanentryDateTimeArray[1];
+                        
+                        let longHTML = "{{ include ('manualScanEvtSubtemplatePart1.twig', {'frmdatepickuniqueID':'datepick_upditm', 'frmtimepickuniqueID':'timepick_upditm', 'frmentitypickuniqueID':'entitypick_upditm', 'frmactivity':'/recvbarcodeupd', 'frmusage':'upditem'})|escape('js') }}";
+                        $.featherlight(longHTML, {type:'html'});
+                        //console.log('after featherlight');
+                        $('#datepick_upditm').removeAttr("readonly");
+                        $('#datepick_upditm').val(scanentryDate);
+                        $('#timepick_upditm').val(scanentryTime);
+                        $('#entitypick_upditm').val(scanentryID);
+                        $("div.featherlight-inner>p").css("display", "none");
+                        $("div.featherlight-inner form").attr("action", "/recvbarcodeupdate");
+                        $("div.featherlight-inner form").off();
+                        $('div.featherlight-inner form input[name="currentscanrecord"]').val(btnID);
+                        break;
+                    }
+                    case "remove": {
+                        break;
+                    }
+                }
             }
         </script>
     </head>
@@ -30,6 +60,9 @@
         </div>
         {% include 'commonbar.twig' %}
         {% include 'manualScanEvtSubtemplatePart1.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm', 'frmentitypickuniqueID':'entitypick_newitm', 'frmactivity':'/recvbarcodemanual', 'frmusage':'additem'} %}
+        <div id="edit-itm-rootdivform">
+
+        </div>
         <div style="width:100%; margin-bottom:10px; border-top:1px dotted black">
             <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
             <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
@@ -50,7 +83,7 @@
                 <td class="stat-data">[{{ singlescan.KNOWNBARCODE_ID|default('-----')|e }}]{{ singlescan.RAWBARCODE|default('-----')|e }}</td>
                 <td class="stat-data">{{ singlescan.FIELD1|default('-----')|e }} {{ singlescan.FIELD2|default('-----')|e }} {{ singlescan.FIELD3|default('-----')|e }}</td>
                 <td class="stat-data">{{ singlescan.SCANDATETIME|default('-----')|e }}</td>
-                <td> <input type="button" value="{{localizedmessages["pageform_edit"]|default("[Edit]")}}" data-editbtn-id="{{singlescan.ID}}" data-editbtn-mode="edit" onclick="invokeAction(this);"> 
+                <td> <input type="button" value="{{localizedmessages["pageform_edit"]|default("[Edit]")}}" data-editbtn-id="{{singlescan.ID}}" data-editbtn-entityid="{{singlescan.KNOWNBARCODE_ID}}" data-editbtn-entitydatetime="{{singlescan.SCANDATETIME}}" data-editbtn-mode="edit" onclick="invokeAction(this);"> 
                      <input type="button" value="{{localizedmessages["pageform_remove"]|default("[Remove]")}}" data-editbtn-id="{{singlescan.ID}}" data-editbtn-mode="remove" onclick="invokeAction(this);"> 
                 </td>
             </tr>
@@ -105,6 +138,7 @@
                 });
             });
             {% include 'manualScanEvtSubtemplatePart2.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm', 'frmentitypickuniqueID':'entitypick_newitm' } %}
+            {# {% include 'manualScanEvtSubtemplatePart2.twig' with {'frmdatepickuniqueID':'datepick_upditm', 'frmtimepickuniqueID':'timepick_upditm', 'frmentitypickuniqueID':'entitypick_upditm' } %} #}
         </script>
     </body>
 </html>

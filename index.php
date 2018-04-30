@@ -110,9 +110,9 @@ $app->post('/recvbarcodemanual[/]', function(Request $request, Response $respons
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = $request->getParsedBody();
-    $datePickNewItem = $body->{'datepick_newitm'};
-    $timePickNewItem = $body->{'timepick_newitm'};
-    $entityIDNewItem = $body->{'entitypick_newitm'};
+    $datePickNewItem = $body['datepick_newitm'];
+    $timePickNewItem = $body['timepick_newitm'];
+    $entityIDNewItem = $body['entitypick_newitm'];
     $entityRawText = $dbInstance->getBarcodeTextByID($entityIDNewItem);
     if ((isset($entityRawText) == false)||($entityRawText=="")) {
        //notify about failure
@@ -127,6 +127,25 @@ $app->post('/recvbarcodemanual[/]', function(Request $request, Response $respons
     $newResponse = $response;
     return $newResponse->withRedirect('/list');
 });
+//update info about barcode
+$app->post('/recvbarcodeupdate[/]', function(Request $request, Response $response, array $args){ 
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $body = $request->getParsedBody();
+        $newResponse = $response; 
+        //$newResponse->getBody()->write("HEH");
+    $datePickupdItem = $body['datepick_upditm'];
+    $timePickupdItem = $body['timepick_upditm'];
+    $entityIDupdItem = $body['entitypick_upditm'];
+    $rcrdToUpdate=$body['currentscanrecord'];
+    
+    $dbInstance->updateScanRecord($rcrdToUpdate, $datePickupdItem, $timePickupdItem, $entityIDupdItem);
+    
+    return $newResponse->withJson($body);
+});
+
 ///*********************
 function sortArrayOfScannedItemsByBarcode($in_initialUnsortedStruct) {
     /// The comparison function must return an integer less than, equal to, or greater than zero if the first argument is considered to be respectively less than, equal to, or greater than the second
@@ -148,8 +167,6 @@ function sortArrayOfScannedItemsByBarcode($in_initialUnsortedStruct) {
         } else {
             return +2;
         }
-        
-        
     }
     $out_sortedStruct = $in_initialUnsortedStruct;
     usort($out_sortedStruct, "cmp");
@@ -235,7 +252,6 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
     }
     return $resultModifiedStructure;
 }
-
 ///*********************
 $app->get('/list/v2[/]', function(Request $request, Response $response, array $args){
     session_start();
