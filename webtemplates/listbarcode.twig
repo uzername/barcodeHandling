@@ -14,8 +14,12 @@
         <link rel="stylesheet" type="text/css" href='../webtemplatesresources/timepicker/jquery.timepicker.min.css' >
         <script type="text/javascript" src="../webtemplatesresources/timepicker/jquery.timepicker.min.js">  </script>
         
+        <script src="../webtemplatesresources/featherlight/release/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+        <link rel="stylesheet" href="../webtemplatesresources/featherlight/release/featherlight.min.css" type="text/css">
+        
         <script type="text/javascript"> 
             function invokeAction(in_entry) {
+                $.featherlight("+++",{type:'text'});
                 console.log(in_entry);
             }
         </script>
@@ -25,7 +29,7 @@
             <a href="/">[<<<]</a>
         </div>
         {% include 'commonbar.twig' %}
-        {% include 'manualScanEvtSubtemplatePart1.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm'} %}
+        {% include 'manualScanEvtSubtemplatePart1.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm', 'frmentitypickuniqueID':'entitypick_newitm', 'frmactivity':'/recvbarcodemanual', 'frmusage':'additem'} %}
         <div style="width:100%; margin-bottom:10px; border-top:1px dotted black">
             <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
             <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
@@ -55,6 +59,13 @@
         </table>
         
         <script type="text/javascript">
+            {% if manualcodeentrystatus is defined %}
+                {% if manualcodeentrystatus == 'OK' %}
+                    alert("{{localizedmessages["pageform_addmsgok"]|default("OK:Added")}}");
+                {% elseif manualcodeentrystatus == 'NOTFOUND' %}
+                    alert("{{localizedmessages["pageform_addmsgnotfound"]|default("FAILURE:NOT FOUND")}}");
+                {% endif %}
+            {% endif %}
             var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
             var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
             function reformatDateSelectionURL() {
@@ -93,7 +104,7 @@
                   }
                 });
             });
-            {% include 'manualScanEvtSubtemplatePart2.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm'} %}
+            {% include 'manualScanEvtSubtemplatePart2.twig' with {'frmdatepickuniqueID':'datepick_newitm', 'frmtimepickuniqueID':'timepick_newitm', 'frmentitypickuniqueID':'entitypick_newitm' } %}
         </script>
     </body>
 </html>

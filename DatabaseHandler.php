@@ -107,6 +107,10 @@ class DataBaseHandler {
         }
         return TRUE;
     }
+    /**
+     * get Company Schedule
+     * @return associative array with fields: TIMESTART, TIMEEND, DATEUSED (a special meaningless date is used to indicate that this schedule is a default one)
+     */
     public function getDefaultCompanySchedule() {
         $reconScheduleQuery = "SELECT * FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date";
         $predefinedScheduleItemDate = "0001-01-02";
@@ -309,4 +313,17 @@ class DataBaseHandler {
             return $objectToReturn;
         }
     }
+
+    public function getBarcodeTextByID($in_entityID) {
+        $usedID = intval($in_entityID);
+        $stmt=$this->pdoInstance->prepare("SELECT RAWBARCODEREGISTERED FROM ".$this->existingBarcodesTableName." WHERE ID=:usedID");
+        $stmt->bindParam(":usedID", $usedID, PDO::PARAM_INT);
+        $stmt->execute();
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+           
+            return $row["RAWBARCODEREGISTERED"];
+        }        
+        return null;
+    }
+
 }

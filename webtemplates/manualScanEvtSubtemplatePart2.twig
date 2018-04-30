@@ -1,4 +1,5 @@
 {# JS declarations for Scan Item (manual entry) #}
+{# <script> #}
             $(function() {
                 $('[data-toggle="{{frmdatepickuniqueID}}"]').datepicker({
                   autoHide: true,
@@ -13,3 +14,18 @@
             $(function() {
                 $('#{{frmtimepickuniqueID}}').timepicker({'timeFormat': 'H:i'});
             });
+        //this function is called every time the user validates the form for item, removal or addition
+        function updateitementry(in_item) {
+        var formDestination = in_item.target.dataset.formusage;
+        console.log(formDestination);
+            var dateValueItm = $('form[data-formusage="'+formDestination+'"] input#{{frmdatepickuniqueID}}');
+            var timeValueItm = $('form[data-formusage="'+formDestination+'"] input#{{frmtimepickuniqueID}}');
+            var characterValueItm = $('form[data-formusage="'+formDestination+'"] select#{{frmentitypickuniqueID}}');
+        if (dateValueItm.val()=="") { dateValueItm.css("border-color", "red"); } else { dateValueItm.css("border-color", "initial"); }
+        if (timeValueItm.val()=="") { timeValueItm.css("border-color", "red"); } else { timeValueItm.css("border-color", "initial"); }
+        if (characterValueItm.val()=="") { characterValueItm.css("border-color", "red"); } else { characterValueItm.css("border-color", "initial"); }
+        if ((dateValueItm.val()=="")||(timeValueItm.val()=="")||(characterValueItm.val()=="")) { console.log("FORM REJECTED"); return false; } 
+        //console.log(dateValueItm.val()+";"+timeValueItm.val()+";"+characterValueItm.val());
+        return true;
+        }
+{# </script> #}

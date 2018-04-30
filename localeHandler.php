@@ -53,7 +53,9 @@ class localeHandler {
             "pageform_edit"=>"[edit]",
             "pageform_captionnew"=>"New Entry",
             "pageform_captionedit"=>"Edit Entry",
-            "pageform_apply"=>"apply changes"
+            "pageform_apply"=>"apply changes",
+            "pageform_addmsgok"=>"New scan entry added",
+            "pageform_addmsgnotfound"=>"Failed to add new scan entry: failed to find a barcode"
         ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Barcode Printing"
@@ -120,7 +122,9 @@ class localeHandler {
             "pageform_edit"=>"[Править запись]",
             "pageform_captionnew"=>"Новая запись",
             "pageform_captionedit"=>"Исправьте запись",
-            "pageform_apply"=>"внести изменения"
+            "pageform_apply"=>"внести изменения",
+            "pageform_addmsgok"=>"Добавлена новая запись в таблицу сканирований",
+            "pageform_addmsgnotfound"=>"Не получилось добавить новую запись в таблицу фактов сканирования: такого штрихкода не обнаружено"
         ],
         "page-printpage"=>[
             "registeredlistprintwndcaption"=>"Печать штрихкодов"

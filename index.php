@@ -80,7 +80,7 @@ $app->get('/changelanguage[/]', function(Request $request, Response $response, a
     }
     return $response->withRedirect($paramValueWayBack."/");
 });
-
+//save to scan table from the fact of scanning
 $app->post('/recvbarcode[/]', function(Request $request, Response $response, array $args){
     $localtime = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
     
@@ -101,6 +101,31 @@ $app->post('/recvbarcode[/]', function(Request $request, Response $response, arr
     $newResponse = $response;
     $newResponse = $newResponse->withJson($data)->withStatus(200);
     return $newResponse;
+});
+//save to scan table from manual entry
+$app->post('/recvbarcodemanual[/]', function(Request $request, Response $response, array $args){
+    session_start();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $body = $request->getParsedBody();
+    $datePickNewItem = $body->{'datepick_newitm'};
+    $timePickNewItem = $body->{'timepick_newitm'};
+    $entityIDNewItem = $body->{'entitypick_newitm'};
+    $entityRawText = $dbInstance->getBarcodeTextByID($entityIDNewItem);
+    if ((isset($entityRawText) == false)||($entityRawText=="")) {
+       //notify about failure
+        $_SESSION['manualcodeentrystatus']='NOTFOUND';
+    } else {
+       //notify about success 
+       $time1 = date_create_from_format("d.m.Y H:i:s", $datePickNewItem." ".$timePickNewItem.sprintf(":%02d",rand(0,59)), new DateTimeZone($this->get('settings')['timezonestring']));
+       $dbInstance->saveScanTime($entityRawText, intval($entityIDNewItem) ,$time1->format('Y-m-d H:i:s'));
+       $_SESSION['manualcodeentrystatus']='OK';
+    }
+    
+    $newResponse = $response;
+    return $newResponse->withRedirect('/list');
 });
 ///*********************
 function sortArrayOfScannedItemsByBarcode($in_initialUnsortedStruct) {
@@ -387,6 +412,13 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
 
     $templateTransmission["barcodeentrylistfrm"] = $dbInstance->listAllBarcodes();
+    
+    $templateTransmission["barcodeentrydefaulttime"] = $dbInstance->getDefaultCompanySchedule()["TIMESTART"];
+    
+    if (isset($_SESSION['manualcodeentrystatus'])) {
+        $templateTransmission['manualcodeentrystatus'] = $_SESSION['manualcodeentrystatus'];
+        unset($_SESSION['manualcodeentrystatus']);
+    }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray+$langsubarray2;
     $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
