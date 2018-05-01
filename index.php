@@ -129,6 +129,7 @@ $app->post('/recvbarcodemanual[/]', function(Request $request, Response $respons
 });
 //update info about barcode
 $app->post('/recvbarcodeupdate[/]', function(Request $request, Response $response, array $args){ 
+    session_start();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
@@ -141,9 +142,17 @@ $app->post('/recvbarcodeupdate[/]', function(Request $request, Response $respons
     $entityIDupdItem = $body['entitypick_upditm'];
     $rcrdToUpdate=$body['currentscanrecord'];
     
-    $dbInstance->updateScanRecord($rcrdToUpdate, $datePickupdItem, $timePickupdItem, $entityIDupdItem);
+    $entityRawText = $dbInstance->getBarcodeTextByID($entityIDupdItem);
     
-    return $newResponse->withJson($body);
+    if ((isset($entityRawText) == false)||($entityRawText=="")) {
+       //notify about failure
+        $_SESSION['manualcodeupdatestatus']='NOTFOUND';
+    } else {
+        $time1 = date_create_from_format("Y-m-d H:i:s", $datePickupdItem." ".$timePickupdItem, new DateTimeZone($this->get('settings')['timezonestring']));
+        $dbInstance->updateScanRecord($rcrdToUpdate, $entityRawText, $time1->format('Y-m-d H:i:s'), $entityIDupdItem);
+        $_SESSION['manualcodeupdatestatus']='OK';
+    }
+    return $newResponse->withRedirect('/list');
 });
 
 ///*********************
@@ -434,6 +443,11 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     if (isset($_SESSION['manualcodeentrystatus'])) {
         $templateTransmission['manualcodeentrystatus'] = $_SESSION['manualcodeentrystatus'];
         unset($_SESSION['manualcodeentrystatus']);
+    }
+    
+    if (isset($_SESSION['manualcodeupdatestatus'])) {
+        $templateTransmission['manualcodeupdatestatus'] = $_SESSION['manualcodeupdatestatus'];
+        unset($_SESSION['manualcodeupdatestatus']);
     }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray+$langsubarray2;

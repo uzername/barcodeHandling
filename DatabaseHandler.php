@@ -325,9 +325,21 @@ class DataBaseHandler {
         }        
         return null;
     }
-
-    public function updateScanRecord($rcrdToUpdate, $datePickupdItem, $timePickupdItem, $entityIDupdItem) {
-        
+    /**
+     * update info about the fact of scanned barcode. ALL PARAMETERS ARE PASSED AS STRING
+     * @param type $rcrdToUpdate - ID of scanhistory record
+     * @param type $entityRawText - newly set raw scanned barcode
+     * @param type $datetimePickupdItem - newly set time
+     * @param type $entityIDupdItem - ID of related barcode entry
+     */
+    public function updateScanRecord($rcrdToUpdate, $entityRawText, $datetimePickupdItem, $entityIDupdItem) {
+        $sqlQuery = "UPDATE ".$this->scanHistoryTableName." SET KNOWNBARCODE_ID=:KNOWNBARCODE_ID, RAWBARCODE=:RAWBARCODE, SCANDATETIME=:SCANDATETIME WHERE ID=:scanentryID";
+        $stmt=$this->pdoInstance->prepare($sqlQuery);
+        $stmt->bindParam(":KNOWNBARCODE_ID", intval($entityIDupdItem), PDO::PARAM_INT);
+        $stmt->bindParam(":SCANDATETIME", $datetimePickupdItem, PDO::PARAM_STR);
+        $stmt->bindParam(":RAWBARCODE", $entityRawText, PDO::PARAM_STR);
+        $stmt->bindParam(":scanentryID", intval($rcrdToUpdate), PDO::PARAM_INT);
+        $stmt->execute();
     }
 
 }
