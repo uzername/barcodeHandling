@@ -1,6 +1,13 @@
 #div-languages {
     font-family: monospace; font-weight: bold; font-size: 10pt; background-color: white; float:left;
 }
+#div-commonmenu {
+    background-color: #e5f2ff;
+    position: absolute;
+    display:none;
+    right: 0;
+    text-align: left;
+}
 body {
     margin:0; padding:0;
 }

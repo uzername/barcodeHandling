@@ -22,10 +22,31 @@
                         <a href="/changelanguage?newlang=ru&wayback={{wayback}}" id="ru">[ru]</a>
                     {% endif %}
                 </div>
+                {% autoescape false %}
+                <a href="#" id="a-commonmenu-trigger" onclick="triggerMenu(this);">{{localizedmessages["showlist"]|default('show')|raw}}</a>
+                {% endautoescape %}
+                <div id="div-commonmenu"> 
                 
-                <a href="/list"> {{localizedmessages['scannedlist']|default('[list]')}} </a> &nbsp;
-                <a href="/list/v2"> {{localizedmessages['scannedlist2']|default('[list2]')}} </a> &nbsp;
-                <a href="/registeredbarcodes"> {{localizedmessages['registeredlist']|default('[Registered]')}} </a> &nbsp;
-                <a href="/options"> {{localizedmessages['optionsentry']|default('[Options]') }} </a>
+                <a href="/list"> {{localizedmessages['scannedlist']|default('[list]')}} </a> &nbsp; <br/>
+                <a href="/list/v2"> {{localizedmessages['scannedlist2']|default('[list2]')}} </a> &nbsp; <br/>
+                <a href="/registeredbarcodes"> {{localizedmessages['registeredlist']|default('[Registered]')}} </a> &nbsp; <br/>
                 
+                <a href="/options"> {{localizedmessages['optionsentry']|default('[Options]') }} </a> &nbsp;
+                
+                </div>
             </div>
+                <script type="text/javascript"> 
+                    {% autoescape false %}
+                    function triggerMenu (in_itmTrigger) {
+                        let triggerObject = $("#a-commonmenu-trigger");
+                        $("#div-commonmenu").toggle();
+                        
+                        if ($("#div-commonmenu").css('display') !== 'none') {
+                            triggerObject.html('{{localizedmessages["hidelist"]|default('hide')|raw}}');
+                        } else {
+                            
+                            triggerObject.html('{{localizedmessages["showlist"]|default('show')|raw}}');
+                        }
+                    }
+                    {% endautoescape %}
+                </script>

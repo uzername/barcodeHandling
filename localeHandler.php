@@ -11,7 +11,9 @@ class localeHandler {
             "registeredlist"=>"[List of Registered Barcodes]",
             "scannedlist2"=>"[List Of registered Scans - Variant2]",
             "optionsentry" => "[Options]",
-            "meaningless" => "[This item does nothing]"
+            "meaningless" => "[This item does nothing]",
+            "showlist"=>"&#9660; SHOW LIST &#9660;",
+            "hidelist"=>"&#9650; HIDE LIST &#9650;",
             ],
         "page-main"=>[
             "invitation"=>"Scan some barcode!",
@@ -80,7 +82,9 @@ class localeHandler {
             "registeredlist"=>"[Список зарегистрированных элементов]",
             "scannedlist2"=>"[Список отсканированных элементов - Вариант2]",
             "optionsentry" => "[Настройки]",
-            "meaningless" => "[Этот пункт ни на что не влияет]"
+            "meaningless" => "[Этот пункт ни на что не влияет]",
+            "showlist"=>"&#9660; Показать список &#9660;",
+            "hidelist"=>"&#9650; Скрыть список &#9650;",
             ],
         "page-main"=>[
             "invitation"=>"Отсканируйте штрихкод!",
