@@ -275,7 +275,7 @@ class DataBaseHandler {
     }
     /**
      * remove barcodes identified by list of IDs
-     * @param type $in_barcodeListID
+     * @param array $in_barcodeListID
      */
     public function removeSavedBarcodes($in_barcodeListID) {
         $in  = str_repeat('?,', count($in_barcodeListID) - 1) . '?';
@@ -338,6 +338,16 @@ class DataBaseHandler {
         $stmt->bindParam(":KNOWNBARCODE_ID", intval($entityIDupdItem), PDO::PARAM_INT);
         $stmt->bindParam(":SCANDATETIME", $datetimePickupdItem, PDO::PARAM_STR);
         $stmt->bindParam(":RAWBARCODE", $entityRawText, PDO::PARAM_STR);
+        $stmt->bindParam(":scanentryID", intval($rcrdToUpdate), PDO::PARAM_INT);
+        $stmt->execute();
+    }
+    /**
+     * remove single item from scan history
+     * @param string $in_singleScanEntryID
+     */
+    public function removeSingleScanEntry($rcrdToUpdate) {
+        $sqlQuery = "DELETE FROM ".$this->scanHistoryTableName." WHERE ID=:scanentryID";
+        $stmt=$this->pdoInstance->prepare($sqlQuery);
         $stmt->bindParam(":scanentryID", intval($rcrdToUpdate), PDO::PARAM_INT);
         $stmt->execute();
     }

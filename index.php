@@ -127,6 +127,27 @@ $app->post('/recvbarcodemanual[/]', function(Request $request, Response $respons
     $newResponse = $response;
     return $newResponse->withRedirect('/list');
 });
+//remove barcode scan event from listings
+$app->get('/recvbarcoderemove', function(Request $request, Response $response, array $args){
+    session_start();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    //require authorization
+    if (isset($_SESSION["login"]) ) { 
+        if (isset($_GET['scanentryid']) ) {
+            $dbInstance->removeSingleScanEntry($_GET['scanentryid']);
+            $_SESSION['manualcoderemovestatus']='OK';
+        } else {
+            $_SESSION['manualcoderemovestatus']='PARAMREQUIRED';
+        }
+    } else {
+        $_SESSION['manualcoderemovestatus']='AUTHREQUIRED';
+    }
+    $newResponse = $response;
+    return $newResponse->withRedirect('/list');
+});
 //update info about barcode
 $app->post('/recvbarcodeupdate[/]', function(Request $request, Response $response, array $args){ 
     session_start();
@@ -448,6 +469,11 @@ $app->get('/list[/]', function(Request $request, Response $response, array $args
     if (isset($_SESSION['manualcodeupdatestatus'])) {
         $templateTransmission['manualcodeupdatestatus'] = $_SESSION['manualcodeupdatestatus'];
         unset($_SESSION['manualcodeupdatestatus']);
+    }
+    
+    if (isset($_SESSION['manualcoderemovestatus'])) {
+        $templateTransmission['manualcoderemovestatus'] = $_SESSION['manualcoderemovestatus'];
+        unset($_SESSION['manualcoderemovestatus']);
     }
     
     $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray+$langsubarray2;

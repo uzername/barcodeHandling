@@ -48,6 +48,9 @@
                         break;
                     }
                     case "remove": {
+                            //TODO: send POST (not GET!) query using AJAX
+                        let scanentryID=in_entry.dataset.editbtnId;
+                        location.href = "/recvbarcoderemove?scanentryid="+scanentryID;
                         break;
                     }
                 }
@@ -104,6 +107,8 @@
                 {% elseif manualcodeupdatestatus == 'NOTFOUND' %}
                     alert("{{localizedmessages["pageform_editmsgnotfound"]|default("FAILURE:NOT FOUND")}}");
                 {% endif %}
+            {% elseif manualcoderemovestatus is defined %}        
+               alert("{{manualcoderemovestatus}}");
             {% endif %}
                 
             var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
