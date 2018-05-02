@@ -282,7 +282,144 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
     }
     return $resultModifiedStructure;
 }
+/**
+ * used to generate data for rendering /list/v3
+ * @param mixed $in_Structure - associative array from listScanTimesInRange2
+ * @param DateTime $in_dateTimeStart - start of range
+ * @param DateTime $in_dateTimeEnd - end of range
+ * @return stdClass fields: 'AllDates' (each item is array with 2 elements:date string and number of week (1 is monday, 7 is sunday)) and 'AllUsers'. 
+ * 'AllUsers' is associative array with keys of BarcodeText and values of stdClass object. Each stdClass object has 2 properties: 'timedarray' and 'display'.
+ * 'display' is a string and 'timedarray' is array with 2 items.
+ */
+function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateTime $in_dateTimeEnd) {
+    $rawResult = (object)['AllDates'=>[], 'AllUsers'=>[]];
+    $dateIterator = $in_dateTimeStart; $dateNumericIterator = 0;
+    while ($dateIterator<=$in_dateTimeEnd) {
+        $rawResult->{'AllDates'}[]=[$dateIterator->format("d.m.Y"), intval( $dateIterator->format("N") )];
+        $dateIterator->add(new DateInterval('P1D'));
+        $dateNumericIterator++;
+    }
+    foreach ($in_Structure as $valueFromStructure) {
+        //have we met this user before ?
+        if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) {
+            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}] = (object)['timedarray'=>[], 'display'=>''];
+            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'display'}=$valueFromStructure->{"FIELD1"}." ".$valueFromStructure->{"FIELD2"}." ".$valueFromStructure->{"FIELD3"}
+                                                                              ."[".$valueFromStructure->{"BCODE"}.",".$valueFromStructure->{"RAWBARCODE"}."]";
+        }
+        // http://php.net/manual/ru/function.property-exists.php
+        if ((property_exists($valueFromStructure, "SCANID")==FALSE)||($valueFromStructure->{"SCANID"} == NULL)) {
+            //it shows that this user has no scans in period. If we have not done it, fill corresponding array with zeros
+            if ( count($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}) == 0) {
+                for ($i=0; i<$dateNumericIterator; $i++) {
+                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[] = array('0:0:0', 0.0);
+                }
+            }
+        } else {
+            //this user has this single scan
+        }
+    }
+    return $rawResult;
+}
 ///*********************
+
+$app->get('/list/v3[/]', function(Request $request, Response $response, array $args){
+    session_start();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    $templateTransmission['wayback'] = "/list/v3";
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    } 
+    $commonsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "common");
+    $langsubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist");
+    $langsubarrayspecial = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"],   "page-scanlist-special");
+    $restrictaccessenabled = $this->get('settings')['restrictAccessSpecial']; //see config_file.php
+    if ($restrictaccessenabled) { //perform some page restriction handling
+        if (isset($_SESSION["login"])) {
+            $templateTransmission["login"]=$_SESSION["login"];
+        } else { //render restriction
+            $translationSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-restricted");
+            $templateTransmission["localizedmessages"] = $commonsubarray+$translationSubarray;
+            $templateTransmission["waytoproceed"] = '/list/v3';
+            return $this->view->render($response, "protectpage.twig", $templateTransmission);
+        }
+    }   
+    
+        $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
+    if (isset($_GET) ) {    //// date and time fiddling
+        $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
+        $toDateEnabled = ( isset($_GET["to"])&& validateDate(urldecode($_GET["to"])) );
+        
+        if ($fromDateEnabled && $toDateEnabled) {
+            $dateStartString = urldecode($_GET["from"]); 
+            $dateEndString = urldecode($_GET["to"]);
+        }
+        if ( ($fromDateEnabled === TRUE) && ($toDateEnabled === FALSE) ) { //2nd date is to be used as current date
+            $dateStartString = urldecode($_GET["from"]); 
+            $tmplocaldate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
+            $dateEndString = $tmplocaldate->format("d.m.Y");
+        }
+        if ( ($fromDateEnabled === FALSE) && ($toDateEnabled === TRUE) ) { //2nd date is to be used as current date
+            $dateEndString = urldecode($_GET["to"]); 
+            $tmplocaldate = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
+            $tmpprevdate = $tmplocaldate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmpprevdate->format("d.m.Y");
+        }
+        if (($fromDateEnabled === FALSE) && ($toDateEnabled === FALSE)) {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
+        }
+    } else {
+            $tmplocalenddate = new DateTime("now", new DateTimeZone($this->get('settings')['timezonestring']));
+            $dateEndString = $tmplocalenddate->format("d.m.Y");
+            $tmplocalstartdate = $tmplocalenddate->sub(new DateInterval("P1M"));
+            $dateStartString = $tmplocalstartdate->format("d.m.Y");
+    }
+    $time1 = date_create_from_format("d.m.Y", $dateStartString, new DateTimeZone($this->get('settings')['timezonestring']));
+    $time2 = date_create_from_format("d.m.Y", $dateEndString, new DateTimeZone($this->get('settings')['timezonestring']));
+    if ($time2<$time1) {
+        $time3= $time1;
+        $time1 = $time2;
+        $time2 = $time3;
+    }
+    $sqlitedateStart = date_time_set($time1,00,01)->format("Y-m-d H:i");
+    $sqlitedateEnd = date_time_set($time2,23,59)->format("Y-m-d H:i");
+    
+
+          $preparedUseSchedule = $this->get('settings')['calculateTimeUseSchedule'];
+          $preparedCalculateTime = $this->get('settings')['calculateTime'];
+    
+    $templateTransmission["localizedmessages"] = $commonsubarray+$langsubarray+$langsubarrayspecial;
+    $templateTransmission["thishost"] = $_SERVER['SERVER_NAME'];
+    $templateTransmission["datetime"]["from"] = $dateStartString;
+    $templateTransmission["datetime"]["to"] = $dateEndString;
+    
+    $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
+    $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);    
+    if ($preparedCalculateTime == FALSE) {
+            $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
+            $rawscanTimeValues = prepareDataStructure($rawscanTimeValues);
+        $templateTransmission["scanlist"] = $rawscanTimeValues;
+        return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+    } else {
+            $rawscanTimeValues = $dbInstance->listScanTimesInRange2($sqlitedateStart, $sqlitedateEnd);
+            $updatedscanTimeValues = aggregateDataStructure($rawscanTimeValues, date_time_set($time1,00,01), date_time_set($time2,23,59) );
+        $templateTransmission["scanlist"] = $updatedscanTimeValues;
+        return $this->view->render($response, "listbarcode3.twig",$templateTransmission);
+        //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
+        //return $response->withHeader('Content-type', 'text/html')->write($debugLine);
+    }
+});
+
 $app->get('/list/v2[/]', function(Request $request, Response $response, array $args){
     session_start();
     $dbInstance = new DataBaseHandler($this->db);

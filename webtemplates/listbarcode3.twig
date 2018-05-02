@@ -1,0 +1,43 @@
+{# display aggregated workhours sheet #}
+<html>
+    <head>
+        <meta charset="UTF8">
+        <title> {{ localizedmessages['header']|default('SM_NM Scanner') }} </title>
+        <style>
+           
+        </style>
+        <link rel="stylesheet" type="text/css" href="../../webtemplatesresources/commonbar.css" >
+        <link rel="stylesheet" type="text/css" href="../../webtemplatesresources/registeredlist3.css">
+        <script type="text/javascript" src="../../webtemplatesresources/jquery-3.3.1.min.js">  </script>
+        
+        <script type="text/javascript" src="../../webtemplatesresources/fengdatepicker/datepicker.js"> </script>
+        <link rel="stylesheet" href="../../webtemplatesresources/fengdatepicker/datepicker.min.css">
+        
+    </head>    
+    <body>
+        <div style="width:100%"> <a href="/">[<<<]</a> </div>
+        {% include 'commonbar.twig' %}
+        <h4>{{localizedmessages['tableheaderv3']|default('Here be aggregated page')}}</h4>
+        <table class="aggregatedtable-goodborder">
+            <thead class="aggregatedtable-goodborder"> 
+                <tr class="aggregatedtable-goodborder"> 
+                    <th class="aggregatedtable-goodborder">...</th>
+                    {% set datessize = scanlist.AllDates|length %}
+                    {% for dateitem in scanlist.AllDates %}
+                    <th class="aggregatedtable-goodborder"> {{dateitem[0]}} <br /> {{localizedmessages['weekdays'][dateitem[1]]}} </th>
+                    {% endfor %}
+                </tr>
+            </thead> 
+            <tbody class="aggregatedtable-goodborder">
+                {% for barcodekey, arrayvalue in scanlist.AllUsers %}
+                <tr class="aggregatedtable-goodborder"> 
+                    <td class="aggregatedtable-goodborder">{{arrayvalue.display}}</td>
+                    {% for i in 1..datessize %}
+                        <td class="aggregatedtable-goodborder">_</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}                
+            </tbody>
+        </table>
+    </body>
+</html>

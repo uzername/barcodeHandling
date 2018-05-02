@@ -10,6 +10,7 @@ class localeHandler {
             "scannedlist"=>"[List Of registered Scans]",
             "registeredlist"=>"[List of Registered Barcodes]",
             "scannedlist2"=>"[List Of registered Scans - Variant2]",
+            "scannedlist3"=>"[List Of registered Scans - Variant3]",
             "optionsentry" => "[Options]",
             "meaningless" => "[This item does nothing]",
             "showlist"=>"&#9660; SHOW LIST &#9660;",
@@ -48,7 +49,11 @@ class localeHandler {
             "filterbydate"=>"[By Date]",
             "tableheader"=>"List of scanned items",
             "tableheaderv2"=>"List of scanned items, v2",
+            "tableheaderv3"=>"List of scanned items, aggregated, v3",
             "scanlisttotal"=>"Total amount: ",
+        ],
+        "page-scanlist-special"=>[
+            "weekdays"=>['1'=>'Monday', '2'=>'Tuesday', '3'=>'Wednesday', '4'=>'Thursday', '5'=>'Friday', '6'=>'Saturday', '7'=>'Sunday']
         ],
         "pageform-scanlist"=>[
             "pageform_remove"=>"[remove]",
@@ -81,6 +86,7 @@ class localeHandler {
             "scannedlist"=>"[Список отсканированных элементов]",
             "registeredlist"=>"[Список зарегистрированных элементов]",
             "scannedlist2"=>"[Список отсканированных элементов - Вариант2]",
+            "scannedlist3"=>"[Список элементов - Вариант3]",
             "optionsentry" => "[Настройки]",
             "meaningless" => "[Этот пункт ни на что не влияет]",
             "showlist"=>"&#9660; Показать список &#9660;",
@@ -120,9 +126,13 @@ class localeHandler {
             "fromdate"=>"Дата Начало",
             "enddate"=>"Дата Окончание",
             "tableheader"=>"Список фактов сканирования штрихкода",
-            "tableheaderv2"=>"Список фактов сканирования штрихкода - сгрупирован, вариант 2",
+            "tableheaderv2"=>"Список фактов сканирования штрихкода - сгруппирован, вариант 2",
+            "tableheaderv3"=>"Список фактов сканирования штрихкода - сгруппирован, обработан, вариант 3",
             "scanlisttotal"=>"Всего: "
             ],
+        "page-scanlist-special"=>[
+            "weekdays"=>['1'=>'Понедельник', '2'=>'Вторник', '3'=>'Среда', '4'=>'Четверг', '5'=>'Пятница', '6'=>'Суббота', '7'=>'Воскресенье']
+        ],
         "pageform-scanlist"=>[
             "pageform_remove"=>"[Убрать запись]",
             "pageform_edit"=>"[Править запись]",

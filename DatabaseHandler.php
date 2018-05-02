@@ -221,6 +221,32 @@ class DataBaseHandler {
         }
         return $allScan;
     }
+    /**
+     * get scan entries combined with all registered entities. Used for generating aggregated table (list3)
+     * @param type $in_dateTimeStart - start of range
+     * @param type $in_dateTimeEnd - end of range
+     * @return array Associative array with keys: ID (from scan history table), BCODE (ID from registered barcodes), RAWBARCODE from registered barcodes, 
+     * FIELD1 registered barcodes, FIELD2 registered barcodes FIELD3 registered barcodes, SCANDATETIME. ALL VALUES EXCEPT BCODE AND FIELD1,FIELD2,FIELD3 MAY BE NULL (it was observed that those nullable properties may not be present in result)
+     * Array comes out sort of "sorted": users come out in "groups" (entries relating to same user are located close, one to another) and time is sorted inside the group 
+     * (pay attention that datetime in sqlite is stored that string, so sorting result may be not that predictable. It may be worth to re-sort it in app code)
+     */
+    public function listScanTimesInRange2($in_dateTimeStart, $in_dateTimeEnd) {
+        $SHTN = $this->scanHistoryTableName;
+        $RBTN = $this->existingBarcodesTableName;
+        $sqlQuery = "select ".$SHTN.".ID as SCANID, ".$RBTN.".ID AS BCODE, ".$RBTN.".RAWBARCODEREGISTERED AS RAWBCODE, ".$RBTN.".FIELD1, ".$RBTN.".FIELD2, ".$RBTN.".FIELD3, ".$SHTN.".SCANDATETIME"
+                . " FROM ".$RBTN." left join ".$SHTN." on ".$SHTN.".KNOWNBARCODE_ID = ".$RBTN.".ID WHERE ((SCANDATETIME IS NULL) OR (SCANDATETIME BETWEEN :val1 AND :val2 )) order by RAWBCODE, SCANDATETIME";
+        $stmt = $this->pdoInstance->prepare($sqlQuery);
+        $stmt->bindParam(":val1", $in_dateTimeStart);
+        $stmt->bindParam(":val2", $in_dateTimeEnd);
+        $stmt->execute();
+        $allScan=[];        
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $allScan[] = (object)['SCANID'=>$row['SCANID'], 'BCODE'=>$row['BCODE'], 'RAWBARCODE'=>$row['RAWBCODE'], 'SCANDATETIME'=>$row['SCANDATETIME'],
+                "FIELD1"=>$row["FIELD1"], "FIELD2"=>$row["FIELD2"], "FIELD3"=>$row["FIELD3"] ];            
+        }
+        return $allScan;
+    }
+    
     public function listAllBarcodes() {
         $stmt = $this->pdoInstance->query("SELECT * FROM ".$this->existingBarcodesTableName);
         $stmt->execute();

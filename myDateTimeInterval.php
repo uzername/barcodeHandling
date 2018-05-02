@@ -85,7 +85,9 @@ function add_dateInterval($interval1, $interval2){
     $result->invert = $new_value['invert'];
     return $result;
 }
-
+/**
+ * The actually used class to store and calculate total and subtotal values of hours
+ */
 class TotalHourSpan {
     public $hours;
     public $minutes;
@@ -132,7 +134,9 @@ class TotalHourSpan {
     public function myToString() {
         return sprintf("%02d",$this->hours).":".sprintf("%02d",$this->minutes).":".sprintf("%02d",$this->seconds);
     }
-
+    public function myToFloat() {
+        return $this->hours + 60.0 / ($this->minutes + 60.0 / $this->seconds);
+    }
 }
 
 ?>
