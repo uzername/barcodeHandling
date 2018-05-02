@@ -299,6 +299,7 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
         $dateIterator->add(new DateInterval('P1D'));
         $dateNumericIterator++;
     }
+    $prevusrID = null; $currentSubtotal = new TotalHourSpan();
     foreach ($in_Structure as $valueFromStructure) {
         //have we met this user before ?
         if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) {
@@ -311,11 +312,15 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
             //it shows that this user has no scans in period. If we have not done it, fill corresponding array with zeros
             if ( count($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}) == 0) {
                 for ($i=0; i<$dateNumericIterator; $i++) {
-                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[] = array('0:0:0', 0.0);
+                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[] = array(new TotalHourSpan(), 0.0);
                 }
             }
-        } else {
-            //this user has this single scan
+        } else {  //this user has scan
+            if ($prevusrID != $valueFromStructure->{"BCODE"}) {  //switched to new user
+                
+            } else {
+                
+            }
         }
     }
     return $rawResult;
