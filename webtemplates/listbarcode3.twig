@@ -15,29 +15,96 @@
         
     </head>    
     <body>
+        <div style="display:inline-block" id="hugewrapper">
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         {% include 'commonbar.twig' %}
+        
+        <div style="width:100%" style="margin-bottom:10px">
+            <input type="text" id="startPicker" data-toggle="datepickerfrom" readonly="readonly" > 
+            <input type="text" id="endPicker" data-toggle="datepickerto" readonly="readonly" >
+            <a href="/list/v3?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
+        </div>
+        
         <h4>{{localizedmessages['tableheaderv3']|default('Here be aggregated page')}}</h4>
         <table class="aggregatedtable-goodborder">
             <thead class="aggregatedtable-goodborder"> 
                 <tr class="aggregatedtable-goodborder"> 
-                    <th class="aggregatedtable-goodborder">...</th>
+                    <th class="aggregatedtable-goodborder aggregatedtable-th">...</th>
                     {% set datessize = scanlist.AllDates|length %}
                     {% for dateitem in scanlist.AllDates %}
-                    <th class="aggregatedtable-goodborder"> {{dateitem[0]}} <br /> {{localizedmessages['weekdays'][dateitem[1]]}} </th>
+                    <th class="aggregatedtable-goodborder aggregatedtable-th"> {{dateitem[0]}} <br /> {{localizedmessages['weekdays'][dateitem[1]]}} </th>
                     {% endfor %}
                 </tr>
             </thead> 
             <tbody class="aggregatedtable-goodborder">
                 {% for barcodekey, arrayvalue in scanlist.AllUsers %}
                 <tr class="aggregatedtable-goodborder"> 
-                    <td class="aggregatedtable-goodborder">{{arrayvalue.display}}</td>
+                    <td class="aggregatedtable-goodborder aggregatedtable-td">{{arrayvalue.display}}</td>
                     {% for i in 1..datessize %}
-                        <td class="aggregatedtable-goodborder">_</td>
+                        
+                            {% if arrayvalue.timedarray[i-1] is defined %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-td">    
+                                <span>{{arrayvalue.timedarray[i-1][0]}}</span> <br/>
+                                <span>{{arrayvalue.timedarray[i-1][1]|number_format(4,'.')}}</span>
+                            {% else %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-noentries aggregatedtable-td">    
+                                <span>00:00:00</span> <br/> <span>0.0</span>
+                            {% endif %}
+                        </td>
                     {% endfor %}
                 </tr>
                 {% endfor %}                
             </tbody>
         </table>
+        </div>    
+                <script type="text/javascript">
+            var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
+            var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
+            function reformatDateSelectionURL() {
+                let newurl = "/list/v2?from=";
+                newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth()+1 < 10 ? '0' : '')+(firstdate.getMonth()+1) )+"."+firstdate.getFullYear();
+                newurl+="&to=";
+                newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth()+1 < 10 ? '0' : '')+(seconddate.getMonth()+1) )+"."+seconddate.getFullYear();
+                
+                $("#filterbydate").attr("href", newurl);
+            }
+            $(function() {
+                $('[data-toggle="datepickerfrom"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["from"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      firstdate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+            $(function() {
+                $('[data-toggle="datepickerto"]').datepicker({
+                  autoHide: true,
+                  zIndex: 2048,
+                  format: 'dd.mm.yyyy',
+                  autoPick: true,
+                  date: "{{datetime["to"]}}",
+                  pick: function(evt) {
+                      //console.log(date);
+                      seconddate = evt.date;
+                      reformatDateSelectionURL();
+                  }
+                });
+            });
+            
+            // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
+            
+            $(function() {
+                let usedwidth = $("div#hugewrapper").css("width");
+                $("html").css("width", usedwidth);
+                $("body").css("width", usedwidth);
+            });
+        </script>    
+            
     </body>
 </html>

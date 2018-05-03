@@ -228,7 +228,7 @@ class DataBaseHandler {
      * @return array Associative array with keys: ID (from scan history table), BCODE (ID from registered barcodes), RAWBARCODE from registered barcodes, 
      * FIELD1 registered barcodes, FIELD2 registered barcodes FIELD3 registered barcodes, SCANDATETIME. ALL VALUES EXCEPT BCODE AND FIELD1,FIELD2,FIELD3 MAY BE NULL (it was observed that those nullable properties may not be present in result)
      * Array comes out sort of "sorted": users come out in "groups" (entries relating to same user are located close, one to another) and time is sorted inside the group 
-     * (pay attention that datetime in sqlite is stored that string, so sorting result may be not that predictable. It may be worth to re-sort it in app code)
+     * (pay attention that datetime in sqlite is stored that string, so sorting result may be not that predictable. It may be worth to re-sort it in app code). Date comes in format "Y-m-d H:i:s"
      */
     public function listScanTimesInRange2($in_dateTimeStart, $in_dateTimeEnd) {
         $SHTN = $this->scanHistoryTableName;

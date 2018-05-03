@@ -134,8 +134,11 @@ class TotalHourSpan {
     public function myToString() {
         return sprintf("%02d",$this->hours).":".sprintf("%02d",$this->minutes).":".sprintf("%02d",$this->seconds);
     }
+    public function __toString() {
+        return $this->myToString();
+    }
     public function myToFloat() {
-        return $this->hours + 60.0 / ($this->minutes + 60.0 / $this->seconds);
+        return $this->hours + ($this->minutes + $this->seconds/60.0)/60.0;
     }
 }
 

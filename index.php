@@ -230,10 +230,6 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
 function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
     $resultModifiedStructure = [];
     $itercounter=0; $preparedArraySize = count($in_Structure);
-    while ($itercounter<$preparedArraySize) { //iterate over the whole structure
-       $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>""];
-       $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
-       $datespanTotal = new TotalHourspan();
        $defaultScheduleToUse = [];
        $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
        $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
@@ -241,6 +237,12 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
        if (filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE) {
             $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
        }
+       
+    while ($itercounter<$preparedArraySize) { //iterate over the whole structure
+       $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>""];
+       $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
+       $datespanTotal = new TotalHourspan();
+       
        foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>"", "additionalstatus"=>[]];
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"} = $valuetimearray;
@@ -287,41 +289,115 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
  * @param mixed $in_Structure - associative array from listScanTimesInRange2
  * @param DateTime $in_dateTimeStart - start of range
  * @param DateTime $in_dateTimeEnd - end of range
+ * @param $in_injectedLocalTimeZone - string with timezone for dates calculation
+ * @param DataBaseHandler $in_injectedDBstructure - it is handy to have Database structure around
  * @return stdClass fields: 'AllDates' (each item is array with 2 elements:date string and number of week (1 is monday, 7 is sunday)) and 'AllUsers'. 
  * 'AllUsers' is associative array with keys of BarcodeText and values of stdClass object. Each stdClass object has 2 properties: 'timedarray' and 'display'.
  * 'display' is a string and 'timedarray' is array with 2 items.
  */
-function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateTime $in_dateTimeEnd) {
+function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateTime $in_dateTimeEnd, $in_injectedLocalTimeZone, DataBaseHandler $in_injectedDBstructure) {
     $rawResult = (object)['AllDates'=>[], 'AllUsers'=>[]];
     $dateIterator = $in_dateTimeStart; $dateNumericIterator = 0;
+    
+       $defaultScheduleToUse = [];
+       $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
+       $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
+       $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
+       $injectedUseSchedule = filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN);
+       if ($injectedUseSchedule==TRUE) {
+            $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
+       }
+    
     while ($dateIterator<=$in_dateTimeEnd) {
-        $rawResult->{'AllDates'}[]=[$dateIterator->format("d.m.Y"), intval( $dateIterator->format("N") )];
+        $rawResult->{'AllDates'}[]=[$dateIterator->format("Y-m-d"), intval( $dateIterator->format("N") )];
         $dateIterator->add(new DateInterval('P1D'));
         $dateNumericIterator++;
     }
-    $prevusrID = null; $currentSubtotal = new TotalHourSpan();
+    $prevTimeStamp = null; $currentPeriodClosed = TRUE; $prevIndex = -1;
     foreach ($in_Structure as $valueFromStructure) {
+        
+        //+++++++++++++ the period is still opened
+            if (( $injectedUseSchedule==TRUE ) && ($currentPeriodClosed === FALSE)) {
+               $dateMissed = $prevTimeStamp;    
+               $valueFromStructurePrev = $in_Structure[$prevIndex];
+               //checking switchout to the another date
+               $brassKeyOfDateTimeSwitching = (explode(" ",$valueFromStructurePrev->{"SCANDATETIME"})[0] != explode(" ",$valueFromStructure->{"SCANDATETIME"})[0]);
+               //checking switchout to another user
+               $bronzeKeyOfUserSwitching = ($valueFromStructurePrev->{"BCODE"} != $valueFromStructure->{"BCODE"});
+               
+               if ($brassKeyOfDateTimeSwitching || $bronzeKeyOfUserSwitching) {
+               
+               $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
+               $endTimeAsArray = explode(":", $defaultScheduleToUse["TIMEEND"] );
+               $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
+               $endOfDay = clone $dateMissed;
+               date_time_set($endOfDay, intval($endTimeAsArray[0]), intval($endTimeAsArray[1]), 0);
+                if (($intrvl2->d!=0)&&($endOfDay>=$dateMissed) ) {                   
+                   //if a remaining unprocessed datetime remains beyond the end of day then discard it.
+                   $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
+                   
+                   $indexFound = null; $currentIndexOfDate = 0;
+                    foreach ($rawResult->{'AllDates'} as $valueDate) {
+                        if ( $valueDate[0] == explode(" ", $valueFromStructurePrev->{'SCANDATETIME'})[0]) {
+                            $indexFound = $currentIndexOfDate;
+                            break;
+                        }
+                        $currentIndexOfDate++;
+                    }
+                    if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$valueFromStructurePrev->{'SCANDATETIME'}." NOT  IN RANGE"); return; }
+                   
+                   
+                    $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvl3);
+                    $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->myToFloat();
+                    $currentPeriodClosed = TRUE;
+               }
+               
+               }
+            }
+        //+++++++++++++
+        
         //have we met this user before ?
-        if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) {
+        if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) { //...no, we have not
+            
+            
+            $prevTimeStamp = null; $currentPeriodClosed = TRUE;
             $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}] = (object)['timedarray'=>[], 'display'=>''];
             $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'display'}=$valueFromStructure->{"FIELD1"}." ".$valueFromStructure->{"FIELD2"}." ".$valueFromStructure->{"FIELD3"}
                                                                               ."[".$valueFromStructure->{"BCODE"}.",".$valueFromStructure->{"RAWBARCODE"}."]";
         }
         // http://php.net/manual/ru/function.property-exists.php
-        if ((property_exists($valueFromStructure, "SCANID")==FALSE)||($valueFromStructure->{"SCANID"} == NULL)) {
-            //it shows that this user has no scans in period. If we have not done it, fill corresponding array with zeros
-            if ( count($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}) == 0) {
-                for ($i=0; i<$dateNumericIterator; $i++) {
-                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[] = array(new TotalHourSpan(), 0.0);
-                }
-            }
+        if ((property_exists($valueFromStructure, "SCANID")==FALSE)||($valueFromStructure->{"SCANID"} === NULL)) {
+            //it shows that this user has no scans in period, so SCANID is set to NULL. By query,the result contains only one record with SCANID == NULL if database is healthy
         } else {  //this user has scan
-            if ($prevusrID != $valueFromStructure->{"BCODE"}) {  //switched to new user
-                
-            } else {
-                
+            //get the corresponding index in date array
+            $indexFound = null; $currentIndex = 0;
+            foreach ($rawResult->{'AllDates'} as $valueDate) {
+                if ( $valueDate[0] == explode(" ", $valueFromStructure->{'SCANDATETIME'})[0]) {
+                    $indexFound = $currentIndex;
+                    break;
+                }
+                $currentIndex++;
             }
+            if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$valueFromStructure->{'SCANDATETIME'}." NOT  IN RANGE"); return; }
+            if (key_exists($indexFound, $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}) == FALSE) {
+                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound] = [new TotalHourSpan(),0.0];
+            } //else { //we have some recordings with this period and this user
+                if ($currentPeriodClosed === TRUE) { //got new entry, and we have this period indicated as closed; reopen it
+                    $prevTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $valueFromStructure->{"SCANDATETIME"}, new DateTimeZone($in_injectedLocalTimeZone));
+                    $currentPeriodClosed = FALSE;
+                } else { //find difference between dates, close the period
+                    $value2 = DateTime::createFromFormat("Y-m-d H:i:s", $valueFromStructure->{"SCANDATETIME"}, new DateTimeZone($in_injectedLocalTimeZone));
+                    $value1 = $prevTimeStamp;
+                    
+                    $intrvln = date_diff($value2, $value1);
+                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvln);
+                    $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][0]->myToFloat();
+                    $currentPeriodClosed = TRUE;
+                }
+            //}
+            
         }
+        $prevIndex++;
     }
     return $rawResult;
 }
@@ -417,7 +493,7 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
         return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
     } else {
             $rawscanTimeValues = $dbInstance->listScanTimesInRange2($sqlitedateStart, $sqlitedateEnd);
-            $updatedscanTimeValues = aggregateDataStructure($rawscanTimeValues, date_time_set($time1,00,01), date_time_set($time2,23,59) );
+            $updatedscanTimeValues = aggregateDataStructure($rawscanTimeValues, date_time_set($time1,00,01), date_time_set($time2,23,59), $this->get('settings')['timezonestring'], $dbInstance );
         $templateTransmission["scanlist"] = $updatedscanTimeValues;
         return $this->view->render($response, "listbarcode3.twig",$templateTransmission);
         //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
