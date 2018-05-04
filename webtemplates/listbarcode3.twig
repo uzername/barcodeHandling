@@ -61,7 +61,7 @@
             var firstdate = new Date( parseInt("{{datetime["from"]}}".substring(6,10)), parseInt("{{datetime["from"]}}".substring(3,5)), parseInt("{{datetime["from"]}}".substring(0,2)) ); 
             var seconddate = new Date( parseInt("{{datetime["to"]}}".substring(6,10)), parseInt("{{datetime["to"]}}".substring(3,5)), parseInt("{{datetime["to"]}}".substring(0,2)) );;
             function reformatDateSelectionURL() {
-                let newurl = "/list/v2?from=";
+                let newurl = "/list/v3?from=";
                 newurl+=( (firstdate.getDate() < 10 ? '0' : '')+firstdate.getDate() )+"."+( (firstdate.getMonth()+1 < 10 ? '0' : '')+(firstdate.getMonth()+1) )+"."+firstdate.getFullYear();
                 newurl+="&to=";
                 newurl+=( (seconddate.getDate() < 10 ? '0' : '')+seconddate.getDate() )+"."+( (seconddate.getMonth()+1 < 10 ? '0' : '')+(seconddate.getMonth()+1) )+"."+seconddate.getFullYear();
