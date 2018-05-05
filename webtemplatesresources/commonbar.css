@@ -80,3 +80,7 @@ html, body {
             table.stat-data, th.stat-data, td.stat-data {
             border: 1px solid black;
             }
+            td.stat-data {
+                    text-align: center;
+                    vertical-align: middle;
+            }

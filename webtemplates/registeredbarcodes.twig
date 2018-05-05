@@ -239,7 +239,7 @@
                 {% endif %}
                 </td>
                 {% if singleregistration.PATHTOBARCODE is not empty %}
-                <td class="stat-data" style="padding-left:20px; padding-right:20px"><img data-entryid-img="{{singleregistration.ID}}" src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
+                <td class="stat-data" style="padding-left:20px; padding-right:20px; padding-bottom: 10px; padding-top: 10px"><img data-entryid-img="{{singleregistration.ID}}" src="{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" /></td>
                 {% else %}
                 <td class="stat-data"> ----- </td>
                 {% endif %}
@@ -263,7 +263,7 @@
                     {# <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.BARCODETYPE|e }}"> </span> #}
                     <span data-recordentryid="{{singleregistration.ID}}" {# class="recordentry-text" #}>{{ singleregistration.BARCODETYPE|default('-----')|e }}</span>
                 </td>
-                <td> <input type="button" value="{{localizedmessages["registeredlistsingleeditbtn"]}}" data-editbtn-id="{{singleregistration.ID}}" data-editbtn-mode="edit" onclick="invokeedit(event);"> <br /> 
+                <td style="vertical-align: middle"> <input type="button" value="{{localizedmessages["registeredlistsingleeditbtn"]}}" data-editbtn-id="{{singleregistration.ID}}" data-editbtn-mode="edit" onclick="invokeedit(event);"> <br /> 
                      <input type="button" value="{{localizedmessages["registeredlistsingleremovebtn"]}}" data-removebtn-id="{{singleregistration.ID}}" onclick="invokeremove(event);"> </td>
             </tr>
             {% endfor %}
