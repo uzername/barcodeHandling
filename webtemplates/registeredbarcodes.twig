@@ -63,12 +63,30 @@
                             var $newrow = $("<tr class=\"stat-data\"> </tr>");
                             $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.ID+"<br />"+
                             "<input type=\"checkbox\" name=\"checkbox_Name"+rawresponse[0].backtrackdata.ID+"\" id=\"checkbox_ID"+rawresponse[0].backtrackdata.ID+"\" class=\"printcheckbox\" data-identifier=\""+rawresponse[0].backtrackdata.ID+"\">"
-                            +" </td>");
+                            +" </td>");      
                             $newrow.append("<td class=\"stat-data\" style=\"padding-left:20px; padding-right:20px\"> "+"<img src=\""+rawresponse[0].addedfilepath+"\" alt=\"barcodeimg\" />"+" </td>");
-                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
+                            //$newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.newbarcode+" </td>");
+                            /*
                             $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput1+" </td>");
                             $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput2+" </td>");
-                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput3+" </td>");
+                            $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.fldinput3+" ");
+                            */
+                            let newrowfieldcolumns = "<td class=\"stat-data\"> ";                                                                                                        
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-edit\"> <input type=\"text\" value=\""+rawresponse[0].backtrackdata.newbarcode+"\" name=\"recordentry-input-rawbarcode\"> </span>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-text recordentry-span-rawbarcode\">"+rawresponse[0].backtrackdata.newbarcode+"</span>";
+                            newrowfieldcolumns += "</td> ";
+                            newrowfieldcolumns += "<td class=\"stat-data\"> ";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-edit\"> <input type=\"text\" value="+rawresponse[0].backtrackdata.fldinput1+" name=\"recordentry-input-field1\"> </span>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-text recordentry-span-field1\">"+rawresponse[0].backtrackdata.fldinput1+"</span>";
+                            newrowfieldcolumns += "</br>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-edit\"> <input type=\"text\" value="+rawresponse[0].backtrackdata.fldinput2+" name=\"recordentry-input-field2\"> </span>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-text recordentry-span-field2\">"+rawresponse[0].backtrackdata.fldinput2+"</span>";
+                            newrowfieldcolumns += "</br>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-edit\"> <input type=\"text\" value="+rawresponse[0].backtrackdata.fldinput3+" name=\"recordentry-input-field3\"> </span>";
+                            newrowfieldcolumns += "<span data-recordentryid=\""+rawresponse[0].backtrackdata.ID+"\" class=\"recordentry-text recordentry-span-field3\">"+rawresponse[0].backtrackdata.fldinput3+"</span>";
+                            
+                            newrowfieldcolumns += "</td> ";
+                            
                             $newrow.append("<td class=\"stat-data\"> "+rawresponse[0].backtrackdata.barcodetype+" </td>");
                             $newrow.append("<td> <input type=\"button\" value=\"{{localizedmessages["registeredlistsingleeditbtn"]}}\"> <br /> <input type=\"button\" value=\"{{localizedmessages["registeredlistsingleremovebtn"]}}\"> </td>");
                             
@@ -183,7 +201,7 @@
         </div>
         {% include 'commonbar.twig' %}
         <div id="div-newcodecommon">
-        <form>
+        <form> {# form for entering data about new entry #}
             <div style="width:100%" class="clearfix"> 
                 <div class="div-newcodecolN1">{{ localizedmessages['ncodefield1']|default('Field 1')|e }}</div> 
                 <div class="div-newcodecolN2"> <input type="text" name="fldinput1" id="fldinput1"> </div>
@@ -223,11 +241,12 @@
                 <th class="stat-data">&nbsp;</th> 
                 <th class="stat-data"> {{localizedmessages["registeredlistbarcodecapt"]}} </th>
                 <th class="stat-data"> {{localizedmessages["ncodebarcode"]}} </th>
-                
+                {#
                 <th class="stat-data"> {{localizedmessages["ncodefield1"]}} </th>
                 <th class="stat-data"> {{localizedmessages["ncodefield2"]}} </th>
                 <th class="stat-data"> {{localizedmessages["ncodefield3"]}} </th>
-                
+                #}
+                <th class="stat-data"> ...&nbsp;...&nbsp;... </th>
                 <th class="stat-data"> {{localizedmessages["ncodebarcodetype"]}} </th>
                 <th class="stat-data">&nbsp;</th>
             </thead>
@@ -248,16 +267,14 @@
                     <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-rawbarcode">{{ singleregistration.RAWBARCODEREGISTERED|default('-----')|e }}</span>
                 </td>
                 <td class="stat-data">
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD1|e }}" name="recordentry-input-field1"> </span>
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field1" >{{ singleregistration.FIELD1|default('-----')|e }}</span>
-                </td>
-                <td class="stat-data">
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD2|e }}" name="recordentry-input-field2"> </span>
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field2">{{ singleregistration.FIELD2|default('-----')|e }}</span>
-                </td>
-                <td class="stat-data">
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD3|e }}" name="recordentry-input-field3"> </span>
-                    <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field3">{{ singleregistration.FIELD3|default('-----')|e }}</span>
+                    <span>{{localizedmessages["ncodefield1"]|default('Field 1')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD1|e }}" name="recordentry-input-field1"> </span>
+                    <span>{{localizedmessages["ncodefield1"]|default('Field 1')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field1" >{{ singleregistration.FIELD1|default('-----')|e }}</span>
+                    <br />
+                    <span>{{localizedmessages["ncodefield2"]|default('Field 2')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD2|e }}" name="recordentry-input-field2"> </span>
+                    <span>{{localizedmessages["ncodefield2"]|default('Field 2')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field2">{{ singleregistration.FIELD2|default('-----')|e }}</span>
+                    <br />
+                    <span>{{localizedmessages["ncodefield3"]|default('Field 3')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.FIELD3|e }}" name="recordentry-input-field3"> </span>
+                    <span>{{localizedmessages["ncodefield3"]|default('Field 3')|e }}</span>:<span data-recordentryid="{{singleregistration.ID}}" class="recordentry-text recordentry-span-field3">{{ singleregistration.FIELD3|default('-----')|e }}</span>
                 </td>
                 <td class="stat-data">
                     {# <span data-recordentryid="{{singleregistration.ID}}" class="recordentry-edit"> <input type="text" value="{{ singleregistration.BARCODETYPE|e }}"> </span> #}
