@@ -32,6 +32,12 @@ class localeHandler {
             "ncodefield3"=>'Field 3', //used in table too
             "ncodebarcode"=>'Barcode Data', //used in table too
             "ncodebarcodetype"=>'Barcode Type', //used in table too
+            
+            "ncodefieldgender"=>'Field 4',
+            "ncodefieldposition"=>'Position',
+            "ncodefieldmale"=>'male',
+            "ncodefieldfemale"=>'female',
+            
             "registeredlistprint"=>"Print Selected", //used in table too
             "registeredlistbarcodecapt"=>"Barcode", //used in table too
             "registeredlistnoitemstoprint"=>"No items selected",
@@ -108,6 +114,10 @@ class localeHandler {
             "ncodefield3"=>'Поле 3', //used in table too
             "ncodebarcode"=>'Данные в штрихкоде', //used in table too
             "ncodebarcodetype"=>'Тип штрихкода', //used in table too
+            "ncodefieldgender"=>'Поле 4',
+            "ncodefieldposition"=>'Должность',
+            "ncodefieldmale"=>'муж.',
+            "ncodefieldfemale"=>'жен.',
             "registeredlistprint"=>"Распечатать отмеченные", //used in table too
             "registeredlistbarcodecapt" => "Штрихкод", //used in table too
             "registeredlistnoitemstoprint"=>"Ничего не выбрано для печати",

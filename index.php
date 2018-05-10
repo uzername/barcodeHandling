@@ -402,6 +402,24 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
     return $rawResult;
 }
 ///*********************
+$app->get('/list/v4[/]', function(Request $request, Response $response, array $args){
+    session_start();
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $templateTransmission = [];
+    $templateTransmission['wayback'] = "/list/v3";
+    $privateLocaleHandler = new localeHandler();
+    if (isset($_SESSION["lang"] )) {
+        $templateTransmission["lang"] = $_SESSION["lang"];
+    } else {
+        $_SESSION["lang"] = $privateLocaleHandler->getDefaultLocale();
+        $templateTransmission["lang"]=$privateLocaleHandler->getDefaultLocale();
+    } 
+    
+    
+} );
 
 $app->get('/list/v3[/]', function(Request $request, Response $response, array $args){
     session_start();
@@ -815,12 +833,12 @@ $app->post('/newbarcode[/]', function(Request $request, Response $response, arra
      $generatedBytes = $generator->getBarcode($body->{'newbarcode'}, ($body->{'barcodetype'} == "CODE128")?"C128":$body->{'barcodetype'},1,125);
      file_put_contents($pathToBarcode, $generatedBytes);
      
-    $dbInstance->saveCodeEntry($body->{'newbarcode'}, $subpathToBarcode, $body->{'fldinput1'}, $body->{'fldinput2'}, $body->{'fldinput3'}, $body->{'barcodetype'});
+    $dbInstance->saveCodeEntry($body->{'newbarcode'}, $subpathToBarcode, $body->{'fldinput1'}, $body->{'fldinput2'}, $body->{'fldinput3'}, $body->{'barcodetype'}, $body->{'fieldposition'}, $body->{'fieldgender'});
     $latestBarcodeID = $dbInstance->getLatestBarcodeAdded();
     $data = array(['status' => 'OK', 'addedfilepath'=>$request->getUri()->getBasePath().$subpathToBarcode, 
         'backtrackdata'=>[ 
             'fldinput1'=>$body->{'fldinput1'}, 'fldinput2'=>$body->{'fldinput2'}, 'fldinput3'=>$body->{'fldinput3'}, 
-            'barcodetype'=>$body->{'barcodetype'}, 'newbarcode'=>$body->{'newbarcode'}, 'ID'=>$latestBarcodeID ] ]);
+            'barcodetype'=>$body->{'barcodetype'}, 'newbarcode'=>$body->{'newbarcode'}, 'ID'=>$latestBarcodeID, 'fieldposition'=>$body->{'fieldposition'}, 'fieldgender'=>$body->{'fieldgender'} ] ]);
     
     $newResponse = $response;
     $newResponse = $newResponse->withJson($data)->withStatus(200);
