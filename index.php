@@ -225,8 +225,19 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
     }
     return $resultStructure;
 }
-//include also timespan calculation in  datastructure for render
-//WICKED!
+
+/**
+ * include also timespan calculation in  datastructure for render. used in /list/v2
+ * @param type $in_Structure - obtained after prepareDataStructure
+ * @param DataBaseHandler $in_injectedDBstructure
+ * @param string $in_injectedLocalTimeZone
+ * @return array of stdclassobject. fields: 'tableheader' - string with name of entity for which the aggregated time is calculated. 'totaltime' - total time for this entity calculated over the all dates 
+ * 'timedarray' - associative array of timestamps of scans (may also contain records added by this routine, with end-of-day working time). 
+ * Key is date for which we are assembling scan facts, value is stdclass object with fields: 
+ * 'subtotaltime' - aggregated value of time for this date.
+ * 'timelist' - array with timestamps in string
+ * 'additionalstatus' - if 'timelist' contains entries which have been artificially added then [0] has 'closedate' entry
+ */
 function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
     $resultModifiedStructure = [];
     $itercounter=0; $preparedArraySize = count($in_Structure);

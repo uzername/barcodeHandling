@@ -32,6 +32,11 @@
         .tooltip:hover .tooltiptext {
             visibility: visible;
         }
+        .div-formborder {
+            border-bottom: 1px dashed black; 
+            padding-bottom: 5px; margin-bottom: 5px
+        }
+        
         </style>
         
         <script>
@@ -81,12 +86,16 @@
                 }
                 return true;
             }
+            function validateFormCustomTime() {
+                return true;
+            }
         </script>
     </head>
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         {% include 'commonbar.twig' %}
         <h4> {{ localizedmessages['optscaption']|default('Settings page') }} </h4>
+<div class="div-formborder">        
 <form name="myform" action="/saveoptions" onsubmit="return validateForm();" method="post">
         <p> {{ localizedmessages['optsdefaultschedule'] }} </p>
         <p> 
@@ -98,7 +107,43 @@
         <p style="margin-left: 30px; margin-top: 0px" class="tooltip"><input type="checkbox" id="usetimeonlylimitedbyworkday" name="limitbyworkdaytime" {% if ((commonconfig['UTLWrkDay'] is defined) and (commonconfig['UTLWrkDay'])) %} checked {% endif %} 
                   {% if not((commonconfig['UWSchd'] is defined) and (commonconfig['UWSchd'])) %} disabled="disabled" {% endif %} value="1" >
             <span>{{localizedmessages["optsusetimeonlylimitedbyworkday"]}}</span> <span class="tooltiptext">{{localizedmessages["meaningless"]}}</span> </p>
+        <br />
         <input type="submit" name="submitbtn" value="[====]">
 </form>
+</div>
+<div class="div-formborder">
+    <form name="myformcustomtime" action="/savecustomworktime" onsubmit="return validateFormCustomTime();" method="post">
+        <p> {{ localizedmessages['optscustomtimeheader']|default('Custom work time for worker (overrides a common schedule)') }} </p>
+        <div style="width:80%" class="clearfix">
+            <div style="width:59%; float: left">
+                <div style="width:100%">
+                    <span> {{ localizedmessages['optscustomtimestart']|default('Start time') }} </span>
+                    <input id="CUSTOMTIMESTART" name="customtimestart" type="text" class="time" value="{{defaultschedule["TIMESTART"]}}" style="width: 105px"/> 
+                    <select name="customtimestarttype"> 
+                        <option value="currentday" selected>{{ localizedmessages['optscurrentdayselect']|default('Current day') }}</option> 
+                        <option value="nextday">{{ localizedmessages['optsnextdayselect']|default('Next day') }}</option> 
+                    </select>
+                </div>
+                <div style="width:100%">
+                    <span> {{ localizedmessages['optscustomtimeend']|default('End time') }} </span>
+                    <input id="CUSTOMTIMEEND" name="customtimeend" type="text" class="time" value="{{defaultschedule["TIMEEND"]}}" style="width: 105px"/> 
+                    <select name="customtimeendtype"> 
+                        <option value="currentday" selected>{{ localizedmessages['optscurrentdayselect']|default('Current day') }}</option> 
+                        <option value="nextday">{{ localizedmessages['optsnextdayselect']|default('Next day') }}</option> 
+                    </select>
+                </div>
+            </div>
+            <div style="width:29%; float: left">
+                <select name="customtimeentity"> 
+                {# list here users #}
+                {% for item in availableEntriesForSpecialWorktime %}
+                    <option value="{{item.ID}}"> item.completeEntry </option>
+                {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+        
     </body>
 </html>

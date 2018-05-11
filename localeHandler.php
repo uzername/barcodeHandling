@@ -57,6 +57,7 @@ class localeHandler {
             "tableheaderv2"=>"List of scanned items, v2",
             "tableheaderv3"=>"List of scanned items, aggregated, v3",
             "scanlisttotal"=>"Total amount: ",
+            "tooltipartificialentry"=>"This entry was added because company's schedule is used",
         ],
         "page-scanlist-special"=>[
             "weekdays"=>['1'=>'Monday', '2'=>'Tuesday', '3'=>'Wednesday', '4'=>'Thursday', '5'=>'Friday', '6'=>'Saturday', '7'=>'Sunday']
@@ -85,6 +86,10 @@ class localeHandler {
             "optsuseworkschedule"=>"Involve company work schedule in calculations",
             "optsusetimeonlylimitedbyworkday"=>"Include time only in the range of working schedule",
             "optsmsgless8hours"=>"Difference between time is less than 8 hours. Is it OK?",
+            
+            "optscustomtimeheader"=>"Custom work time for worker (overrides a common schedule)",
+            "optscurrentdayselect"=>"Current day",
+            "optsnextdayselect"=>"Next day",
         ]
         ),
     "ru" => array(
@@ -138,7 +143,8 @@ class localeHandler {
             "tableheader"=>"Список фактов сканирования штрихкода",
             "tableheaderv2"=>"Список фактов сканирования штрихкода - сгруппирован, вариант 2",
             "tableheaderv3"=>"Список фактов сканирования штрихкода - сгруппирован, обработан, вариант 3",
-            "scanlisttotal"=>"Всего: "
+            "scanlisttotal"=>"Всего: ",
+            "tooltipartificialentry"=>"Эта запись была добавлена потому что используется график работы компании"
             ],
         "page-scanlist-special"=>[
             "weekdays"=>['1'=>'Понедельник', '2'=>'Вторник', '3'=>'Среда', '4'=>'Четверг', '5'=>'Пятница', '6'=>'Суббота', '7'=>'Воскресенье']
