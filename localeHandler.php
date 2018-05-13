@@ -90,6 +90,8 @@ class localeHandler {
             "optscustomtimeheader"=>"Custom work time for worker (overrides a common schedule)",
             "optscurrentdayselect"=>"Current day",
             "optsnextdayselect"=>"Next day",
+            "optscustomtimestart"=>"Start time",
+            "optscustomtimeend"=>"End time"
         ]
         ),
     "ru" => array(
@@ -173,6 +175,12 @@ class localeHandler {
             "optsuseworkschedule"=>"Применять график работы предприятия при вычислениях",
             "optsusetimeonlylimitedbyworkday"=>"Учитывать только время в диапазоне рабочего дня",
             "optsmsgless8hours"=>"Разница между значениями времени составляет меньше 8 часов? Правильно?",
+            
+            "optscustomtimeheader"=>"Особый рабочий график (переопределяет общий рабочий график)",
+            "optscurrentdayselect"=>"Текущий день",
+            "optsnextdayselect"=>"Следующий день",
+            "optscustomtimestart"=>"Начало работы",
+            "optscustomtimeend"=>"Окончание работы",
         ]
         )
     ];

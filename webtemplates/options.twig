@@ -136,11 +136,13 @@
             <div style="width:29%; float: left">
                 <select name="customtimeentity"> 
                 {# list here users #}
-                {% for item in availableEntriesForSpecialWorktime %}
-                    <option value="{{item.ID}}"> item.completeEntry </option>
-                {% endfor %}
+                <option value="empty">&nbsp;</option>
+            {% for singlebarcodeentryobj in barcodeentrylistfrm %}
+                <option value="{{singlebarcodeentryobj.ID}}">{{singlebarcodeentryobj.FIELD1|default("_")}} {{singlebarcodeentryobj.FIELD2|default("_")}} {{singlebarcodeentryobj.FIELD3|default("_")}}</option>
+            {% endfor %}
                 </select>
             </div>
+                <input type="submit" value="=>"/>
         </div>
     </form>
 </div>

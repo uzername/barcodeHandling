@@ -8,6 +8,7 @@ class DataBaseHandler {
     public $accessRolesTableName = "accessroles";
     public $companyWorkTimeTableName = "companyworktime";
     public $settingsTableName = "assortedsettings";
+    public $customWorkTimeTableName = "customworkscheduleworker";
     public $pdoInstance;
     public function __construct($in_pdoInstance) {
         $this->pdoInstance = $in_pdoInstance;
@@ -30,6 +31,12 @@ class DataBaseHandler {
             
             'Create table if not exists '.$this->companyWorkTimeTableName.
             '(WORKID INTEGER PRIMARY KEY AUTOINCREMENT, DATEUSED TEXT NOT NULL , TIMESTART TEXT NOT NULL, TIMEEND TEXT NOT NULL)',
+            
+            // a special table for custom schedule for worker. FK_BARCODEID relates to worker. STARTORENDTIME is a time of start or end of work. 
+            // TIMETYPE == 0 if it is start time or 1 if it is end time. 
+            // CURRENTDAY == 0 if this time is related to next day or CURRENTDAY == 1 if this time is related to current day
+            'Create table if not exists '.$this->customWorkTimeTableName.
+            '(IDWORKTIME INTEGER PRIMARY KEY AUTOINCREMENT, BARCODE_ID INTEGER, STARTORENDTIME TEXT NOT NULL, TIMETYPE INTEGER, CURRENTDAY INTEGER , FOREIGN KEY(BARCODE_ID) REFERENCES '.$this->existingBarcodesTableName.'(ID) ON DELETE CASCADE ON UPDATE CASCADE)',
             
             'Create table if not exists '.$this->settingsTableName.
             '(USESCHEDULE INTEGER NOT NULL, LIMITBYWORKDAYTIME INTEGER NOT NULL)'
@@ -383,5 +390,22 @@ class DataBaseHandler {
         $stmt->bindParam(":scanentryID", intval($rcrdToUpdate), PDO::PARAM_INT);
         $stmt->execute();
     }
-
+    /**
+     * Obtain all custom schedules for ALL workers, where it is possible. It returns already PREPARED array of objects.
+     * @return array of stdClass objects. each object: BARCODE_ID - id of related record; START_TIME - start time of period; END_TIME - end time of period
+     * START_TIME_TYPE - string with following values: either 'current' or 'next' day
+     * END_TIME_TYPE - string with following values: either 'current' or 'next'
+     */
+    public function getAllCustomSchedules() {
+        $sqlQuery = "SELECT * FROM ".$this->customWorkTimeTableName." ORDER BY BARCODE_ID";
+        $stmt=$this->pdoInstance->prepare($sqlQuery);
+        $stmt->execute();
+        $arrayToReturn = [];
+        $nextObject = (object)['BARCODE_ID'=>'', 'START_TIME'=>'', 'END_TIME'=>'', 'START_TIME_TYPE'=>'', 'END_TIME_TYPE'=>''];
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+           
+            
+        }        
+        return $arrayToReturn;
+    }
 }

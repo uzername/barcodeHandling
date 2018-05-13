@@ -807,8 +807,17 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
     //$utlwd = $this->get('settings')["calculateTimeLimitedByWorkDay"];
     $commonconfigarray = $dbInstance->getExistingSettings();
     $templateTransmission["commonconfig"] = ["UWSchd"=>filter_var($commonconfigarray["USESCHEDULE"],FILTER_VALIDATE_BOOLEAN), "UTLWrkDay"=>filter_var($commonconfigarray["LIMITBYWORKDAYTIME"],FILTER_VALIDATE_BOOLEAN)];
+    $templateTransmission["barcodeentrylistfrm"] = $dbInstance->listAllBarcodes();
     
     return $this->view->render($response, "options.twig", $templateTransmission);
+});
+
+$app->post('/savecustomworktime', function(Request $request, Response $response, array $args) { 
+    $dbInstance = new DataBaseHandler($this->db);
+    if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    
 });
 
 $app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {

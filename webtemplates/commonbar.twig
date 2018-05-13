@@ -39,11 +39,16 @@
                 <script type="text/javascript"> 
                     {% autoescape false %}
                     function triggerMenu (in_itmTrigger) {
-                        let triggerObject = $("#a-commonmenu-trigger");
+                        var triggerObject = $("#a-commonmenu-trigger");
                         $("#div-commonmenu").toggle();
-                        
                         if ($("#div-commonmenu").css('display') !== 'none') {
                             triggerObject.html('{{localizedmessages["hidelist"]|default('hide')|raw}}');
+                            let savedWidth = $("#div-commonmenu").css('width');
+                            let triggerObjectWidth = parseInt($("#a-commonmenu-trigger").css('width'));
+                            let triggerObjectRight = triggerObjectWidth+triggerObject.position().left;
+                            $("#div-commonmenu").offset({top: $("#div-commonmenu").position().top, 
+                                left: triggerObjectRight-parseInt(savedWidth) });
+                            $("#div-commonmenu").css('width', savedWidth);
                         } else {
                             
                             triggerObject.html('{{localizedmessages["showlist"]|default('show')|raw}}');
