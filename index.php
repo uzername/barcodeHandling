@@ -817,7 +817,9 @@ $app->post('/savecustomworktime', function(Request $request, Response $response,
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
+    $body = $request->getParsedBody();
     
+    return $response->withRedirect('/options');
 });
 
 $app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {
