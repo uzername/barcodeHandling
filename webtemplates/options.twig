@@ -37,6 +37,12 @@
             padding-bottom: 5px; margin-bottom: 5px
         }
         
+        #myformcustomtime-errors {
+            color:darkred;
+        }
+        .myformcustomtime-errorborder {
+            border:1px solid darkred;
+        }
         </style>
         
         <script>
@@ -55,6 +61,9 @@
             $(document).ready(function() {
                 $('#TIMESTART').timepicker({'timeFormat': 'H:i'});
                 $('#TIMEEND').timepicker({'timeFormat': 'H:i'});
+                
+                $('#CUSTOMTIMESTART').timepicker({'timeFormat': 'H:i'});
+                $('#CUSTOMTIMEEND').timepicker({'timeFormat': 'H:i'});
             });
             function validateForm() {
                 let timestartjq = $('#TIMESTART'); let validationfailed = false;
@@ -86,8 +95,77 @@
                 }
                 return true;
             }
+            /**
+             * 
+               examine for all the possible errors.
+             * @return {Array|validateFormCustomTime.validationArray} - contains error codes from form validation: 'NEXTDAY' - both datetimes cannot relate to nextday, 
+             * 'TIMEMISMATCH' - time start cannot exceed time end; 'NOENTITY' - no suitable entity for custom worktime selected
+             *            */
             function validateFormCustomTime() {
-                return true;
+                var validationArray = [];
+                var customtimeendtypeval = $("#customtimeendtype").val();
+                var customtimestarttypeval = $("#customtimestarttype").val();
+                var customtimestart = $("#CUSTOMTIMESTART").val(); var customtimeend = $("#CUSTOMTIMEEND").val();
+                var customentity = $("#customtimeentity").val();
+                var currentDate = new Date(); var customtimestartperiod = new Date(); var customtimeendperiod = new Date();
+                if ( (customtimeendtypeval == "nextday")&&(customtimestarttypeval == "nextday") ) {
+                    validationArray.push("NEXTDAY");
+                } else {
+                    if (customtimeendtypeval == "nextday") {
+                       customtimeendperiod.setDate(currentDate.getDate()+1);
+                    }
+                    if (customtimestarttypeval == "nextday") {
+                       customtimestartperiod.setDate(currentDate.getDate()+1);
+                    }
+                }
+                var ArrayDataTimeStart = $.map(customtimestart.split(':'), function(value){
+                    return parseInt(value, 10);
+                });
+                var ArrayDataTimeEnd = $.map(customtimeend.split(':'), function(value){
+                    return parseInt(value, 10);
+                });
+                customtimestartperiod.setHours(ArrayDataTimeStart[0], ArrayDataTimeStart[1]);
+                customtimeendperiod.setHours(ArrayDataTimeEnd[0], ArrayDataTimeEnd[1]);
+                console.log(customtimestartperiod); console.log(customtimeendperiod);
+                if (customtimestartperiod>=customtimeendperiod) {
+                    validationArray.push("TIMEMISMATCH");
+                }
+                if ((customentity === undefined)||(customentity==="empty")) {
+                    validationArray.push("NOENTITY");
+                }
+                return validationArray;
+            }
+            function validateFormCustomTimeWrapper() {
+                var validateResult = validateFormCustomTime(); var totalvalidation = true;
+                var finaltext = "";
+                if (validateResult.indexOf("NEXTDAY") != -1) {
+                    finaltext += "{{localizedmessages["optsmsgnextday"]|default('Both datetimes cannot relate to next day')}} <br />";
+                    $("#customtimestarttype").addClass("myformcustomtime-errorborder");
+                    $("#customtimeendtype").addClass("myformcustomtime-errorborder");
+                    totalvalidation = false;
+                } else {
+                    $("#customtimeendttype").removeClass("myformcustomtime-errorborder");
+                    $("#customtimeendtype").removeClass("myformcustomtime-errorborder");
+                }
+                if (validateResult.indexOf("NOENTITY") != -1) {
+                    finaltext += "{{localizedmessages["optsmsgnoitem"]|default('No item selected for custom worktime')}} <br />";
+                    $("#customtimeentity").addClass("myformcustomtime-errorborder");
+                    totalvalidation = false;
+                } else {
+                    $("#customtimeentity").removeClass("myformcustomtime-errorborder");
+                }
+                if (validateResult.indexOf("TIMEMISMATCH") != -1) {
+                    finaltext += "{{localizedmessages["optsmsgtimemismatch"]|default('Time start cannot exceed time end')}} <br />";
+                    $("#CUSTOMTIMESTART").addClass("myformcustomtime-errorborder");
+                    $("#CUSTOMTIMEEND").addClass("myformcustomtime-errorborder");
+                    totalvalidation = false;
+                } else {
+                    $("#CUSTOMTIMESTART").removeClass("myformcustomtime-errorborder");
+                    $("#CUSTOMTIMEEND").removeClass("myformcustomtime-errorborder");
+                }
+                $("#myformcustomtime-errors").html(finaltext);
+                console.log(validateResult);
+                return totalvalidation;
             }
         </script>
     </head>
@@ -108,18 +186,18 @@
                   {% if not((commonconfig['UWSchd'] is defined) and (commonconfig['UWSchd'])) %} disabled="disabled" {% endif %} value="1" >
             <span>{{localizedmessages["optsusetimeonlylimitedbyworkday"]}}</span> <span class="tooltiptext">{{localizedmessages["meaningless"]}}</span> </p>
         <br />
-        <input type="submit" name="submitbtn" value="[====]">
+        <input type="submit" name="submitbtn" value="{{localizedmessages["optssavecommonschedule"]|default('Save Common Company Worktime')}}">
 </form>
 </div>
 <div class="div-formborder">
-    <form name="myformcustomtime" action="/savecustomworktime" onsubmit="return validateFormCustomTime();" method="post">
+    <form name="myformcustomtime" action="/savecustomworktime" onsubmit="return validateFormCustomTimeWrapper();" method="post">
         <p> {{ localizedmessages['optscustomtimeheader']|default('Custom work time for worker (overrides a common schedule)') }} </p>
-        <div style="width:80%" class="clearfix">
+        <div style="width:80%; margin-left: auto; margin-right: auto;" class="clearfix">
             <div style="width:59%; float: left">
                 <div style="width:100%">
                     <span> {{ localizedmessages['optscustomtimestart']|default('Start time') }} </span>
                     <input id="CUSTOMTIMESTART" name="customtimestart" type="text" class="time" value="{{defaultschedule["TIMESTART"]}}" style="width: 105px"/> 
-                    <select name="customtimestarttype"> 
+                    <select name="customtimestarttype" id="customtimestarttype"> 
                         <option value="currentday" selected>{{ localizedmessages['optscurrentdayselect']|default('Current day') }}</option> 
                         <option value="nextday">{{ localizedmessages['optsnextdayselect']|default('Next day') }}</option> 
                     </select>
@@ -127,14 +205,14 @@
                 <div style="width:100%">
                     <span> {{ localizedmessages['optscustomtimeend']|default('End time') }} </span>
                     <input id="CUSTOMTIMEEND" name="customtimeend" type="text" class="time" value="{{defaultschedule["TIMEEND"]}}" style="width: 105px"/> 
-                    <select name="customtimeendtype"> 
+                    <select name="customtimeendtype" id="customtimeendtype"> 
                         <option value="currentday" selected>{{ localizedmessages['optscurrentdayselect']|default('Current day') }}</option> 
                         <option value="nextday">{{ localizedmessages['optsnextdayselect']|default('Next day') }}</option> 
                     </select>
                 </div>
             </div>
             <div style="width:29%; float: left">
-                <select name="customtimeentity"> 
+                <select name="customtimeentity" id="customtimeentity"> 
                 {# list here users #}
                 <option value="empty">&nbsp;</option>
             {% for singlebarcodeentryobj in barcodeentrylistfrm %}
@@ -142,8 +220,9 @@
             {% endfor %}
                 </select>
             </div>
-                <input type="submit" value="=>"/>
         </div>
+            <input type="submit" value="{{ localizedmessages['optssavecustomworktime']|default('Save Custom Worktime') }}"/>
+            <p id="myformcustomtime-errors"> </p>
     </form>
 </div>
         

@@ -91,7 +91,13 @@ class localeHandler {
             "optscurrentdayselect"=>"Current day",
             "optsnextdayselect"=>"Next day",
             "optscustomtimestart"=>"Start time",
-            "optscustomtimeend"=>"End time"
+            "optscustomtimeend"=>"End time",
+            "optssavecommonschedule"=>"Save Common Company Worktime",
+            "optssavecustomworktime"=>"Save Custom Worktime",
+            
+            "optsmsgnoitem"=>"No item selected for custom worktime",
+            "optsmsgnextday"=>"Both datetimes cannot relate to next day",
+            "optsmsgtimemismatch"=>"Time start cannot exceed time end"
         ]
         ),
     "ru" => array(
@@ -146,7 +152,7 @@ class localeHandler {
             "tableheaderv2"=>"Список фактов сканирования штрихкода - сгруппирован, вариант 2",
             "tableheaderv3"=>"Список фактов сканирования штрихкода - сгруппирован, обработан, вариант 3",
             "scanlisttotal"=>"Всего: ",
-            "tooltipartificialentry"=>"Эта запись была добавлена потому что используется график работы компании"
+            "tooltipartificialentry"=>"Эта запись была добавлена потому что используется график работы компании (ее нету в списке сканирования)"
             ],
         "page-scanlist-special"=>[
             "weekdays"=>['1'=>'Понедельник', '2'=>'Вторник', '3'=>'Среда', '4'=>'Четверг', '5'=>'Пятница', '6'=>'Суббота', '7'=>'Воскресенье']
@@ -181,6 +187,12 @@ class localeHandler {
             "optsnextdayselect"=>"Следующий день",
             "optscustomtimestart"=>"Начало работы",
             "optscustomtimeend"=>"Окончание работы",
+            "optssavecommonschedule"=>"Сохранить график работы компании",
+            "optssavecustomworktime"=>"Сохранить особый график работы",
+            
+            "optsmsgnoitem"=>"Не выбрана запись для особого графика ",
+            "optsmsgnextday"=>"Оба значения времени не могут относиться к следующему дню",
+            "optsmsgtimemismatch"=>"Дата и время начала особого графика не может превышать дату и время окончания"
         ]
         )
     ];
