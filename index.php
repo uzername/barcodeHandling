@@ -834,16 +834,21 @@ $app->post('/savecustomworktime[/]', function(Request $request, Response $respon
 });
 $app->post('/removecustomworktime[/]', function(Request $request, Response $response, array $args) { 
     session_start();
-    $data = array(['status' => '']);
+    $data = (object)(['status' => '']);
     if (isset($_SESSION["login"]) == FALSE) {
         $data['status'] = 'authrequired';
-    }
+    } else {
     $dbInstance = new DataBaseHandler($this->db);
         if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = $request->getParsedBody();
-    $dbInstance->removeCustomWorkTimeDB( );
+    $dbInstance->removeCustomWorkTimeDB( intval($body->{'bcode'}) );
+    
+    }
+      $newResponse = $response;
+      $newResponse = $newResponse->withJson($data)->withStatus(200);
+    return $newResponse;
 });
 $app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {
     $dbInstance = new DataBaseHandler($this->db);

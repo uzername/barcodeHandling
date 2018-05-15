@@ -170,13 +170,14 @@
             function removeWorkingTimeRoutine(in_ArgToRemove, in_callbackAfterXHR) {
                 //AJAX query
                 var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-                var jsonbody = JSON.stringify(in_ArgToRemove);
+                var jsonbody = JSON.stringify({bcode: in_ArgToRemove});
                 XHR.open("POST", "/removecustomworktime", true);
                 XHR.onreadystatechange = function() {
                     if (XHR.readyState != 4) return;
                         if (XHR.status != 200) {
                             alert(XHR.status + ': ' + XHR.statusText);
                         } else {
+                            var rawresponse = JSON.parse(XHR.responseText);
                             in_callbackAfterXHR();
                         }
                 };
