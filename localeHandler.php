@@ -97,7 +97,13 @@ class localeHandler {
             
             "optsmsgnoitem"=>"No item selected for custom worktime",
             "optsmsgnextday"=>"Both datetimes cannot relate to next day",
-            "optsmsgtimemismatch"=>"Time start cannot exceed time end"
+            "optsmsgtimemismatch"=>"Time start cannot exceed time end",
+            "optscustomworktimesuccess"=>"Added new custom work time...",
+            "optscustomworktimefailure"=>"Failed to add record about custom schedule, probably one already exists",
+            
+            "optscustomworktimeheaderentity" => "Entry",
+            "optscustomworktimeheadertimestart" => "Starting time",
+            "optscustomworktimeheadertimeend" => "Finishing time",
         ]
         ),
     "ru" => array(
@@ -192,7 +198,14 @@ class localeHandler {
             
             "optsmsgnoitem"=>"Не выбрана запись для особого графика ",
             "optsmsgnextday"=>"Оба значения времени не могут относиться к следующему дню",
-            "optsmsgtimemismatch"=>"Дата и время начала особого графика не может превышать дату и время окончания"
+            "optsmsgtimemismatch"=>"Дата и время начала особого графика не может превышать дату и время окончания",
+            "optscustomworktimesuccess"=>"Добавлена запись об особом рабочем графике",
+            "optscustomworktimefailure"=>"Не получилось добавить запись об особом рабочем графике, возможно запись уже существует",
+            
+            "optscustomworktimeheaderentity" =>  "Запись",
+            "optscustomworktimeheadertimestart" => "Время начала",
+            "optscustomworktimeheadertimeend" => "Время окончания",
+            "optssingleremovebtn" => "Отменить график"
         ]
         )
     ];

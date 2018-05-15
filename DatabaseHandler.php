@@ -392,25 +392,48 @@ class DataBaseHandler {
     }
     /**
      * Obtain all custom schedules for ALL workers, where it is possible. It returns already PREPARED array of objects.
-     * @return array of stdClass objects. each object: BARCODE_ID - id of related record; START_TIME - start time of period; END_TIME - end time of period
+     * @return ASSOCIATIVE_ARRAY of stdClass objects. each object: BARCODE_ID - id of related record; START_TIME - start time of period; END_TIME - end time of period
      * START_TIME_TYPE - string with following values: either 'current' or 'next' day
      * END_TIME_TYPE - string with following values: either 'current' or 'next'
+     * Keys of array are BARCODE_ID
      */
     public function getAllCustomSchedules() {
-        $sqlQuery = "SELECT * FROM ".$this->customWorkTimeTableName." ORDER BY BARCODE_ID, TIMETYPE";
+        $sqlQuery = "SELECT ".$this->customWorkTimeTableName.".*, ".$this->existingBarcodesTableName.".FIELD1, "
+                .$this->existingBarcodesTableName.".FIELD2, ".$this->existingBarcodesTableName.".FIELD3 "
+                ." FROM ".$this->customWorkTimeTableName." INNER JOIN ".$this->existingBarcodesTableName." ON "
+                .$this->customWorkTimeTableName.".BARCODE_ID = ".$this->existingBarcodesTableName.".ID".
+                " ORDER BY BARCODE_ID, TIMETYPE";
         $stmt=$this->pdoInstance->prepare($sqlQuery);
         $stmt->execute();
         $arrayToReturn = [];
-        $nextObject = (object)['BARCODE_ID'=>'', 'START_TIME'=>'', 'END_TIME'=>'', 'START_TIME_TYPE'=>'', 'END_TIME_TYPE'=>''];
+        $nextObject = (object)['BARCODE_ID'=>'', "BARCODE_FLD1"=>'', "BARCODE_FLD2"=>'', "BARCODE_FLD3"=>'', 'START_TIME'=>'', 'END_TIME'=>'', 'START_TIME_TYPE'=>'', 'END_TIME_TYPE'=>''];
         $previousQueryEntry = NULL;
+        //we use assumption that only start and end time defines a custom schedule.
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
             if ($previousQueryEntry != $row['BARCODE_ID']) {
+                $nextObject = (object)['BARCODE_ID'=>'', 'START_TIME'=>'', 'END_TIME'=>'', 'START_TIME_TYPE'=>'', 'END_TIME_TYPE'=>''];
                 $previousQueryEntry = $row['BARCODE_ID'];
+                $currentIndex = '';
+                //$row['TIMETYPE'] should be always 0, taking into account of  assumption in addNewCustomSchedule
+                if ($row['TIMETYPE']==1) { $currentIndex = 'END_TIME';} 
+                elseif ($row['TIMETYPE']==0) { $currentIndex = 'START_TIME';}
+                $nextObject->{'BARCODE_ID'} = $row['BARCODE_ID'];
+                $nextObject->{'BARCODE_FLD1'} = $row["FIELD1"];
+                $nextObject->{'BARCODE_FLD2'} = $row["FIELD2"];
+                $nextObject->{'BARCODE_FLD3'} = $row["FIELD3"];
+                $nextObject->{$currentIndex} = $row["STARTORENDTIME"];
+                $nextObject->{$currentIndex.'_TYPE'} =( ($row['CURRENTDAY'] == 1)?/*'current'*/'optscurrentdayselect':(($row['CURRENTDAY'] == 0)?/*'next'*/'optsnextdayselect':null) );
+                $arrayToReturn[ $row['BARCODE_ID'] ] = $nextObject;
             } else {
-                //got entry considering the entity with ID from our array. Add it to already added entry
-                assert( $arrayToReturn[count($arrayToReturn)-1]->{'BARCODE_ID'} == $row['BARCODE_ID'] );
-                $arrayToReturn[count($arrayToReturn)-1]->{'END_TIME'} = "";
-                $arrayToReturn[count($arrayToReturn)-1]->{'END_TIME_TYPE'} = $row['END_TIME_TYPE'];
+                //got entry considering the entity with ID from our array. Add related data to already added entry
+                $currentIndex = '';
+                //$row['TIMETYPE'] should be always 1, taking into account of  assumption in addNewCustomSchedule
+                if ($row['TIMETYPE']==1) { $currentIndex = 'END_TIME';} 
+                elseif ($row['TIMETYPE']==0) { $currentIndex = 'START_TIME';}
+                assert( $arrayToReturn[$row['BARCODE_ID'] ]->{'BARCODE_ID'} == $row['BARCODE_ID'] );
+                $arrayToReturn[$row['BARCODE_ID'] ]->{$currentIndex} = $row["STARTORENDTIME"];
+                $arrayToReturn[$row['BARCODE_ID'] ]->{$currentIndex.'_TYPE'} =( ($row['CURRENTDAY'] == 1)?/*'current'*/'optscurrentdayselect':(($row['CURRENTDAY'] == 0)?/*'next'*/'optsnextdayselect':null) );
+                
             }
         }        
         return $arrayToReturn;
@@ -422,22 +445,46 @@ class DataBaseHandler {
      *  END_TIME - end time of period;
      *  START_TIME_TYPE - string with following values: either 'current' or 'next' day;
      *  END_TIME_TYPE - string with following values: either 'current' or 'next';
-     *  ENTITY_ID
+     *  ENTITY_ID - related ID from barcodes table
+     * @return Boolean - status of addition
      */
     public function addNewCustomSchedule($in_newObjectWithCustomSchedule) {
+        //assumption: adding more than single custom work schedule for certain worker is not supported by now . And for single worker only 2 records may relate .
+        $sqlQueryRecon = "SELECT COUNT(BARCODE_ID) AS ENTRIES_NUM FROM ".$this->customWorkTimeTableName." WHERE BARCODE_ID = :IN_BARCODE";
+        $stmtRecon=$this->pdoInstance->prepare($sqlQueryRecon);
+        $stmtRecon->bindParam(":IN_BARCODE", $in_newObjectWithCustomSchedule->{'ENTITY_ID'}, PDO::PARAM_INT);
+        $stmtRecon->execute();
+        while ($row=$stmtRecon->fetch(\PDO::FETCH_ASSOC)) {
+            if (intval($row["ENTRIES_NUM"])>=2) {
+                return false;
+            }
+        }
+        //check done, proceed to entry addition
         $sqlQuery = "INSERT INTO ".$this->customWorkTimeTableName." (BARCODE_ID,STARTORENDTIME,TIMETYPE,CURRENTDAY) values (:IN_BARCODE, :IN_STARTORENDTIME, :IN_TIMETYPE, :IN_CURRENTDAY)";
         $stmt=$this->pdoInstance->prepare($sqlQuery);
         $stmt->bindParam(":IN_BARCODE", $in_newObjectWithCustomSchedule->{'ENTITY_ID'}, PDO::PARAM_INT);
-        $stmt->bindParam(":IN_STARTORENDTIME", $in_newObjectWithCustomSchedule->{'START_TIME'}, PDO::PARAM_STRING);
-        $stmt->bindParam(":IN_TIMETYPE", 0, PDO::PARAM_INT);
-        $stmt->bindParam(":IN_CURRENTDAY", (($in_newObjectWithCustomSchedule->{'START_TIME_TYPE'}=='current')?0:1), PDO::PARAM_INT);
+        $stmt->bindParam(":IN_STARTORENDTIME", $in_newObjectWithCustomSchedule->{'START_TIME'}, PDO::PARAM_STR);
+        $intpass1= 0; $stmt->bindParam(":IN_TIMETYPE", $intpass1, PDO::PARAM_INT);
+        $intpass2= (($in_newObjectWithCustomSchedule->{'START_TIME_TYPE'}=='current')?0:1);
+        $stmt->bindParam(":IN_CURRENTDAY", $intpass2, PDO::PARAM_INT);
         $stmt->execute();
         $stmt2=$this->pdoInstance->prepare($sqlQuery);
         $stmt2->bindParam(":IN_BARCODE", $in_newObjectWithCustomSchedule->{'ENTITY_ID'}, PDO::PARAM_INT);
-        $stmt2->bindParam(":IN_STARTORENDTIME", $in_newObjectWithCustomSchedule->{'END_TIME'}, PDO::PARAM_STRING);
-        $stmt2->bindParam(":IN_TIMETYPE", 1, PDO::PARAM_INT);
-        $stmt2->bindParam(":IN_CURRENTDAY", (($in_newObjectWithCustomSchedule->{'START_TIME_TYPE'}=='current')?0:1), PDO::PARAM_INT);
+        $stmt2->bindParam(":IN_STARTORENDTIME", $in_newObjectWithCustomSchedule->{'END_TIME'}, PDO::PARAM_STR);
+        $intpass3= 1; $stmt2->bindParam(":IN_TIMETYPE", $intpass3, PDO::PARAM_INT);
+        $intpass4 = (($in_newObjectWithCustomSchedule->{'END_TIME_TYPE'}=='current')?0:1);
+        $stmt2->bindParam(":IN_CURRENTDAY", $intpass4, PDO::PARAM_INT);
         $stmt2->execute();
-        return;
+        return true;
+    }
+    /**
+     * remove all custom worktime entries which relate to certain worker
+     * @param int $in_intBarcodeID
+     */
+    public function removeCustomWorkTimeDB($in_intBarcodeID) {
+        $sqlQuery = "DELETE FROM ".$this->customWorkTimeTableName." WHERE BARCODE_ID = :IN_BARCODE";
+        $stmt = $this->pdoInstance->prepare($sqlQuery);
+        $stmt->bindParam(":IN_BARCODE", $in_intBarcodeID, PDO::PARAM_INT);
+        $stmt->execute();
     }
 }

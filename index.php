@@ -413,6 +413,7 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
     return $rawResult;
 }
 ///*********************
+//render big formal template 
 $app->get('/list/v4[/]', function(Request $request, Response $response, array $args){
     session_start();
     $dbInstance = new DataBaseHandler($this->db);
@@ -529,7 +530,7 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
         //return $response->withHeader('Content-type', 'text/html')->write($debugLine);
     }
 });
-
+//show scan times with calculated time
 $app->get('/list/v2[/]', function(Request $request, Response $response, array $args){
     session_start();
     $dbInstance = new DataBaseHandler($this->db);
@@ -798,6 +799,12 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
             return $this->view->render($response, "protectpage.twig", $templateTransmission);
         }
     }
+    
+    if (isset($_SESSION['addcustomworktimestatus'])) {
+        $templateTransmission['addcustomworktimestatus'] = $_SESSION['addcustomworktimestatus'];
+        unset($_SESSION['addcustomworktimestatus']);
+    }
+    
     $optionsSubarray = $privateLocaleHandler->getLocaleSubArray($templateTransmission["lang"], "page-options");
     $templateTransmission["localizedmessages"] = $commonsubarray+$optionsSubarray;
     
@@ -808,20 +815,36 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
     $commonconfigarray = $dbInstance->getExistingSettings();
     $templateTransmission["commonconfig"] = ["UWSchd"=>filter_var($commonconfigarray["USESCHEDULE"],FILTER_VALIDATE_BOOLEAN), "UTLWrkDay"=>filter_var($commonconfigarray["LIMITBYWORKDAYTIME"],FILTER_VALIDATE_BOOLEAN)];
     $templateTransmission["barcodeentrylistfrm"] = $dbInstance->listAllBarcodes();
-    
+    $templateTransmission["customworktimearray"] = $dbInstance->getAllCustomSchedules();
     return $this->view->render($response, "options.twig", $templateTransmission);
 });
 
-$app->post('/savecustomworktime', function(Request $request, Response $response, array $args) { 
+$app->post('/savecustomworktime[/]', function(Request $request, Response $response, array $args) { 
+    session_start();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = $request->getParsedBody();
-    
+    $newObjectWithCustomSchedule = (object)['START_TIME'=>$body['customtimestart'], 'END_TIME'=>$body['customtimeend'], 'ENTITY_ID'=>intval($body['customtimeentity']), 
+        'START_TIME_TYPE'=> substr($body['customtimestarttype'], 0, strlen($body['customtimestarttype'])-3), 
+        'END_TIME_TYPE'=>substr($body['customtimeendtype'], 0, strlen($body['customtimeendtype'])-3) ];
+    $_SESSION['addcustomworktimestatus']=$dbInstance->addNewCustomSchedule($newObjectWithCustomSchedule);
     return $response->withRedirect('/options');
 });
-
+$app->post('/removecustomworktime[/]', function(Request $request, Response $response, array $args) { 
+    session_start();
+    $data = array(['status' => '']);
+    if (isset($_SESSION["login"]) == FALSE) {
+        $data['status'] = 'authrequired';
+    }
+    $dbInstance = new DataBaseHandler($this->db);
+        if ($dbInstance == NULL) {
+        return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
+    }
+    $body = $request->getParsedBody();
+    $dbInstance->removeCustomWorkTimeDB( );
+});
 $app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
@@ -971,8 +994,6 @@ $app->get('/signoff/{accessrolepath}[/]', function(Request $request, Response $r
     $paramValueWayBack = $request->getQueryParam('wayback');
     return $response->withRedirect($paramValueWayBack."/");
 });
-
-
 $app->run();
 
 ?>

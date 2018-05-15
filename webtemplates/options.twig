@@ -167,12 +167,46 @@
                 console.log(validateResult);
                 return totalvalidation;
             }
+            function removeWorkingTimeRoutine(in_ArgToRemove, in_callbackAfterXHR) {
+                //AJAX query
+                var XHR = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                var jsonbody = JSON.stringify(in_ArgToRemove);
+                XHR.open("POST", "/removecustomworktime", true);
+                XHR.onreadystatechange = function() {
+                    if (XHR.readyState != 4) return;
+                        if (XHR.status != 200) {
+                            alert(XHR.status + ': ' + XHR.statusText);
+                        } else {
+                            in_callbackAfterXHR();
+                        }
+                };
+                XHR.setRequestHeader('Content-Type', 'application/json');
+                XHR.send(jsonbody);
+            }
+            
+            function removeCustomWorkTimeClick(event) {
+                var arg1 = event.target.getAttribute('data-btnbarcode-id');
+                var callbackRemoveRow = function() {
+                    //get row(s) with selected data https://api.jquery.com/attribute-equals-selector/
+                    // https://stackoverflow.com/a/21756787/
+                   $('tr[data-rowbarcode-id=\"'+arg1+'\"]').remove();
+                };
+                removeWorkingTimeRoutine( arg1, callbackRemoveRow );
+            }
         </script>
     </head>
     <body>
         <div style="width:100%"> <a href="/">[<<<]</a> </div>
         {% include 'commonbar.twig' %}
+        {% if addcustomworktimestatus is defined %}
+            {% if addcustomworktimestatus == true %}
+            <script type="text/javascript"> alert('{{localizedmessages['optscustomworktimesuccess']|default("Custom schedule added")}}');</script>
+            {% elseif addcustomworktimestatus == false %} 
+            <script type="text/javascript"> alert('{{localizedmessages['optscustomworktimefailure']|default("Custom schedule was not added")}}');</script>
+            {% endif %}
+        {%endif%}
         <h4> {{ localizedmessages['optscaption']|default('Settings page') }} </h4>
+        
 <div class="div-formborder">        
 <form name="myform" action="/saveoptions" onsubmit="return validateForm();" method="post">
         <p> {{ localizedmessages['optsdefaultschedule'] }} </p>
@@ -224,6 +258,34 @@
             <input type="submit" value="{{ localizedmessages['optssavecustomworktime']|default('Save Custom Worktime') }}"/>
             <p id="myformcustomtime-errors"> </p>
     </form>
+    <table class="stat-data">
+        <thead class="stat-data">
+            <tr class="stat-data"> 
+                <th class="stat-data">
+                {{localizedmessages["optscustomworktimeheaderentity"]|default('ENTRY')}}
+                </th>
+                <th class="stat-data" colspan="2">
+                    {{localizedmessages['optscustomworktimeheadertimestart']|default('Starting time')}}
+                </th>
+                <th class="stat-data" colspan="2">
+                    {{localizedmessages['optscustomworktimeheadertimeend']|default('Finishing time')}}
+                </th>
+                
+            </tr>
+        </thead>
+        {% for key,item in customworktimearray %}
+        <tr class="stat-data" data-rowbarcode-id="{{key}}">
+            <td class="stat-data"> {{item.BARCODE_FLD1}} {{item.BARCODE_FLD2}} {{item.BARCODE_FLD3}} </td>
+            <td class="stat-data"> {{item.START_TIME}} </td>
+            <td class="stat-data"> {{localizedmessages[item.START_TIME_TYPE]}} </td>
+            <td class="stat-data"> {{item.END_TIME}} </td>
+            <td class="stat-data"> {{localizedmessages[item.END_TIME_TYPE]}} </td>
+            <td style="border: none"> 
+                <input type="button" data-btnbarcode-id="{{key}}" value="{{localizedmessages["optssingleremovebtn"]}}" onclick="removeCustomWorkTimeClick(event);">
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </div>
         
     </body>
