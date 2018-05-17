@@ -178,7 +178,27 @@
                             alert(XHR.status + ': ' + XHR.statusText);
                         } else {
                             var rawresponse = JSON.parse(XHR.responseText);
-                            in_callbackAfterXHR();
+                            //console.log(rawresponse);
+                            switch (rawresponse.status ) {
+                                case 'success': {
+                                in_callbackAfterXHR();
+                                alert("{{localizedmessages['customworktimeremovedOK']|default('Successfully removed a custom work time for worker')}}");
+                                break;
+                                }
+                                case 'dbfailure': {
+                                    alert("{{localizedmessages['customworktimeremovedDBFAILURE']|default('FAILED TO REMOVE CUSTOM WORK TIME. DB QUERY FAILURE. CHECK removeCustomWorkTimeDB()')}}");
+                                    break;
+                                }
+                                case 'authrequired': {
+                                        alert("{{localizedmessages['customworktimeremovedNOAUTH']|default('UNAUTHORIZED')}}");
+                                        break;
+                                    }
+                                default: {
+                                        alert('bad response, see log');
+                                        console.log(rawresponse);
+                                    break;
+                                }
+                            } 
                         }
                 };
                 XHR.setRequestHeader('Content-Type', 'application/json');

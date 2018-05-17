@@ -101,6 +101,10 @@ class localeHandler {
             "optscustomworktimesuccess"=>"Added new custom work time...",
             "optscustomworktimefailure"=>"Failed to add record about custom schedule, probably one already exists",
             
+            "customworktimeremovedOK"=>"Successfully removed a custom work time for worker",
+            "customworktimeremovedDBFAILURE"=>"FAILED TO REMOVE CUSTOM WORK TIME. DB QUERY FAILURE. CHECK removeCustomWorkTimeDB()",
+            "customworktimeremovedNOAUTH"=>"UNAUTHORIZED",
+            
             "optscustomworktimeheaderentity" => "Entry",
             "optscustomworktimeheadertimestart" => "Starting time",
             "optscustomworktimeheadertimeend" => "Finishing time",
@@ -201,6 +205,10 @@ class localeHandler {
             "optsmsgtimemismatch"=>"Дата и время начала особого графика не может превышать дату и время окончания",
             "optscustomworktimesuccess"=>"Добавлена запись об особом рабочем графике",
             "optscustomworktimefailure"=>"Не получилось добавить запись об особом рабочем графике, возможно запись уже существует",
+            
+            "customworktimeremovedOK"=>"Запись об особом рабочем времени удалена",
+            "customworktimeremovedDBFAILURE"=>"Не получилось удалить Запись об особом рабочем времени, см. в removeCustomWorkTimeDB()",
+            "customworktimeremovedNOAUTH"=>"Не получилось удалить Запись об особом рабочем времени, что-то с аутентификацией",
             
             "optscustomworktimeheaderentity" =>  "Запись",
             "optscustomworktimeheadertimestart" => "Время начала",

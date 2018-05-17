@@ -3,7 +3,6 @@
         "slim/slim": "^3.0",
         "monolog/monolog": "^1.23",
         "slim/twig-view": "^2.3",
-        "picqer/php-barcode-generator": "^0.2.2",
-        "slim/flash": "^0.4.0"
+        "picqer/php-barcode-generator": "^0.2.2"
     }
 }

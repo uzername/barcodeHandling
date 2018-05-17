@@ -524,6 +524,8 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
     } else {
             $rawscanTimeValues = $dbInstance->listScanTimesInRange2($sqlitedateStart, $sqlitedateEnd);
             $updatedscanTimeValues = aggregateDataStructure($rawscanTimeValues, date_time_set($time1,00,01), date_time_set($time2,23,59), $this->get('settings')['timezonestring'], $dbInstance );
+            //expand data structure with workers with special schedule.
+            //$expandedscanTimeValues = expandDataStructure($updatedscanTimeValues);
         $templateTransmission["scanlist"] = $updatedscanTimeValues;
         return $this->view->render($response, "listbarcode3.twig",$templateTransmission);
         //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
@@ -836,15 +838,19 @@ $app->post('/removecustomworktime[/]', function(Request $request, Response $resp
     session_start();
     $data = (object)(['status' => '']);
     if (isset($_SESSION["login"]) == FALSE) {
-        $data['status'] = 'authrequired';
+        $data->{'status'} = 'authrequired';
     } else {
     $dbInstance = new DataBaseHandler($this->db);
         if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
     $body = $request->getParsedBody();
-    $dbInstance->removeCustomWorkTimeDB( intval($body->{'bcode'}) );
-    
+    try {
+    $dbInstance->removeCustomWorkTimeDB( intval($body['bcode']) );
+    $data->{'status'} = 'success';
+    } catch (Exception $e) {
+        $data->{'status'} = 'dbfailure';
+    }
     }
       $newResponse = $response;
       $newResponse = $newResponse->withJson($data)->withStatus(200);
