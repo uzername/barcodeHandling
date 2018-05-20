@@ -250,7 +250,7 @@
         {# THE FOLLOWING LINE RELATES TO THE OPTION: USE OR NOT USE THE time only limited by work day. IT IS A BIT SOPHISTICATED... ENABLE IT WHEN IT IS CLEARLY KNOWN WHAT DOES THIS OPTION SHOULD ACTIVATE #}
         <p style="margin-left: 30px; margin-top: 0px" class="tooltip"><input type="checkbox" id="usetimeonlylimitedbyworkday" name="limitbyworkdaytime" {% if ((commonconfig['UTLWrkDay'] is defined) and (commonconfig['UTLWrkDay'])) %} checked {% endif %} 
                   {% if not((commonconfig['UWSchd'] is defined) and (commonconfig['UWSchd'])) %} disabled="disabled" {% endif %} value="1" >
-            <span>{{localizedmessages["optsusetimeonlylimitedbyworkday"]}}</span> <span class="tooltiptext">{{localizedmessages["meaningless"]}}</span> </p>
+            <span>{{localizedmessages["optsusetimeonlylimitedbyworkday"]}}</span> </p>
         <br />
         <input type="submit" name="submitbtn" value="{{localizedmessages["optssavecommonschedule"]|default('Save Common Company Worktime')}}">
 </form>
@@ -259,7 +259,7 @@
     <form name="myformcustomtime" action="/savecustomworktime" onsubmit="return validateFormCustomTimeWrapper();" method="post">
         <p> {{ localizedmessages['optscustomtimeheader']|default('Custom work time for worker (overrides a common schedule)') }} </p>
         {% if barcodeentrylistfrm is empty %}
-        <p style="color:red">{{localizedmessages["optsmsgnowrokersindb"]|default('barcodes ilist is empty!')}}</p>
+        <p style="color:red">{{localizedmessages["optsmsgnowrokersindb"]|default('barcodes list is empty!')}}</p>
         {% endif %}
         <div style="width:80%; margin-left: auto; margin-right: auto;" class="clearfix">
             <div style="width:59%; float: left">

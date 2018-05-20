@@ -85,7 +85,7 @@ class localeHandler {
             "optsdefaultschedule"=>"Common Working Schedule",
             "optsdefaultbreak" => "Common Break Time",
             "optsuseworkschedule"=>"Involve company work schedule in calculations",
-            "optsusetimeonlylimitedbyworkday"=>"Include time only in the range of working schedule",
+            "optsusetimeonlylimitedbyworkday"=>"Use time of break in calculation (it is subtracted)",
             "optsmsgless8hours"=>"Difference between time is less than 8 hours. Is it OK?",
             "optsmsgnowrokersindb" => "No registered barcodes detected. Check Registered Barcodes page",
             
@@ -192,7 +192,7 @@ class localeHandler {
             "optsdefaultschedule"=>"Обычный график работы предприятия",
             "optsdefaultbreak" => "Перерыв в течении дня",
             "optsuseworkschedule"=>"Применять график работы предприятия при вычислениях",
-            "optsusetimeonlylimitedbyworkday"=>"Учитывать только время в диапазоне рабочего дня",
+            "optsusetimeonlylimitedbyworkday"=>"Применять время перерыва в вычислениях (оно вычитается от общего значения для дня)",
             "optsmsgless8hours"=>"Разница между значениями времени составляет меньше 8 часов? Правильно?",
             "optsmsgnowrokersindb" => "Не обнаружено записей о присвоенных штрихкодах. См. [Список зарегистрированных элементов]",
             
