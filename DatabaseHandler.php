@@ -29,8 +29,9 @@ class DataBaseHandler {
             'Create table if not exists '.$this->accessRolesTableName.
             '(ACCESSID INTEGER PRIMARY KEY AUTOINCREMENT, ACCESSROLE TEXT NOT NULL UNIQUE, LANGUAGE VARCHAR(3))',
             
+            //table for company schedule. TIMETYPE shows whether this record relates to worktime (value of 0) or breaktime (value of 1)
             'Create table if not exists '.$this->companyWorkTimeTableName.
-            '(WORKID INTEGER PRIMARY KEY AUTOINCREMENT, DATEUSED TEXT NOT NULL , TIMESTART TEXT NOT NULL, TIMEEND TEXT NOT NULL)',
+            '(WORKID INTEGER PRIMARY KEY AUTOINCREMENT, DATEUSED TEXT NOT NULL , TIMESTART TEXT NOT NULL, TIMEEND TEXT NOT NULL, TIMETYPE INTEGER)',
             
             // a special table for custom schedule for worker. FK_BARCODEID relates to worker. STARTORENDTIME is a time of start or end of work. 
             // TIMETYPE == 0 if it is start time or 1 if it is end time. 
@@ -70,10 +71,12 @@ class DataBaseHandler {
                 }
             }
         //predefined work schedules 
-        $predefinedScheduleItem = ["08:00", "16:30", "0001-01-02"];
-            $reconScheduleQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date";
+        $predefinedScheduleItem = ["08:00", "16:30", "0001-01-02", 0];
+        $predefinedBreaktimeItem = ["12:00", "12:30", "0001-01-02", 1];
+        $reconScheduleQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date AND TIMETYPE=:intimetype";
             $stmt3 = $this->pdoInstance->prepare($reconScheduleQuery);
             $stmt3->bindParam(":date",$predefinedScheduleItem[2], PDO::PARAM_STR);
+            $stmt3->bindParam(":intimetype",$predefinedScheduleItem[3], PDO::PARAM_INT);
             $stmt3->execute();
             $count_itms=0;
             while ($row=$stmt3->fetch(\PDO::FETCH_ASSOC)) {
@@ -82,6 +85,17 @@ class DataBaseHandler {
             if ($count_itms == 0) {//add this item
                 $this->addNewCompanyScheduleDay($predefinedScheduleItem);
             }
+            $stmt3v1 = $this->pdoInstance->prepare($reconScheduleQuery);
+            $stmt3v1->bindParam(":date",$predefinedScheduleItem[2], PDO::PARAM_STR);
+            $stmt3v1->bindParam(":intimetype",$predefinedBreaktimeItem[3], PDO::PARAM_INT);
+            $stmt3v1->execute(); $count_itms3v1=0;
+            while ($row=$stmt3v1->fetch(\PDO::FETCH_ASSOC)) {
+                $count_itms3v1 = $row['FOUND'];
+            }
+            if ($count_itms == 0) {//add this item
+                $this->addNewCompanyScheduleDay($predefinedBreaktimeItem);
+            }
+            
         //predefined  settings
         $predefinedSettingsItem = ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>0];
             $reconSettingsQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->settingsTableName;
@@ -98,15 +112,17 @@ class DataBaseHandler {
     //!!schedule
     /**
      * A default company's work schedule is the one which relates to date 0001-01-02
-     * @param array $arrayNewSchedule associative array with at least 3 items: time start and time end and date;
+     * @param array $arrayNewSchedule associative array with at least 4 items: time start and time end and date and timetype (0 for workhours and 1 for breaktime)
      * @return boolean the addition went smoothly
      */
     public function addNewCompanyScheduleDay(array $arrayNewSchedule) {
-        $insertScheduleQuery = "Insert Into ".$this->companyWorkTimeTableName."(TIMESTART, TIMEEND, DATEUSED) VALUES (:timestart, :timeend, :dateused)";
+        assert( isset($arrayNewSchedule[3]) );
+        $insertScheduleQuery = "Insert Into ".$this->companyWorkTimeTableName."(TIMESTART, TIMEEND, DATEUSED, TIMETYPE) VALUES (:timestart, :timeend, :dateused, :timetype)";
         $stmt = $this->pdoInstance->prepare($insertScheduleQuery);
         $stmt->bindParam(":timestart",$arrayNewSchedule[0], PDO::PARAM_STR);
         $stmt->bindParam(":timeend",$arrayNewSchedule[1], PDO::PARAM_STR);
         $stmt->bindParam(":dateused",$arrayNewSchedule[2], PDO::PARAM_STR);
+        $stmt->bindParam(":timetype",$arrayNewSchedule[3], PDO::PARAM_INT);
         try {
             $stmt->execute();
         } catch (PDOException $exc) {
@@ -119,7 +135,7 @@ class DataBaseHandler {
      * @return associative array with fields: TIMESTART, TIMEEND, DATEUSED (a special meaningless date is used to indicate that this schedule is a default one)
      */
     public function getDefaultCompanySchedule() {
-        $reconScheduleQuery = "SELECT * FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date";
+        $reconScheduleQuery = "SELECT * FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date AND TIMETYPE=0";
         $predefinedScheduleItemDate = "0001-01-02";
         $stmt = $this->pdoInstance->prepare($reconScheduleQuery);
         $stmt->bindParam(":date",$predefinedScheduleItemDate, PDO::PARAM_STR);
@@ -132,17 +148,34 @@ class DataBaseHandler {
                 return $predefinedScheduleItem;
         }
     }
+    //TODO: refactor this routie and unite it with previous one to getDefaultCompanyScheduleOrBreak
+    public function getDefaultCompanyBreak() {
+        $reconScheduleQuery = "SELECT * FROM ".$this->companyWorkTimeTableName." WHERE DATEUSED = :date AND TIMETYPE=1";
+        $predefinedScheduleItemDate = "0001-01-02";
+        $stmt = $this->pdoInstance->prepare($reconScheduleQuery);
+        $stmt->bindParam(":date",$predefinedScheduleItemDate, PDO::PARAM_STR);
+        $stmt->execute();
+        $predefinedScheduleItem = ["TIMESTART"=>"", "TIMEEND"=>"", "DATEUSED"=>""];
+        while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $predefinedScheduleItem["TIMESTART"] = $row['TIMESTART'];
+                $predefinedScheduleItem["TIMEEND"] = $row['TIMEEND'];
+                $predefinedScheduleItem["DATEUSED" ] = $row['DATEUSED'];
+                return $predefinedScheduleItem;
+        }
+    }
+    
     /**
-     * A default company's work schedule is the one which relates to date 0001-01-02
-     * @param array $in_CompanySchedule - associative array with at least 3 keys: "timestart" and "timeend" and "dateused";
+     * Update default company schedule or default break. A default company's work schedule is the one which relates to date 0001-01-02
+     * @param array $in_CompanySchedule - associative array with at least 4 keys: "timestart" and "timeend" and "dateused" and "timetype";
      *  values should conform to regex \d\d:\d\d
      */
     public function updateCompanySchedule(array $in_CompanySchedule) {
-        $updateQuery = "UPDATE ".$this->companyWorkTimeTableName." SET TIMESTART=:timestart, TIMEEND=:timeend WHERE DATEUSED=:in_date"; 
+        $updateQuery = "UPDATE ".$this->companyWorkTimeTableName." SET TIMESTART=:timestart, TIMEEND=:timeend WHERE DATEUSED=:in_date AND timetype = :in_timetype"; 
         $stmt = $this->pdoInstance->prepare($updateQuery);
         $stmt->bindParam(":timestart",$in_CompanySchedule["timestart"], PDO::PARAM_STR);
         $stmt->bindParam(":timeend",$in_CompanySchedule["timeend"], PDO::PARAM_STR);
         $stmt->bindParam(":in_date",$in_CompanySchedule["dateused"], PDO::PARAM_STR);
+        $stmt->bindParam(":in_timetype",$in_CompanySchedule["timetype"], PDO::PARAM_INT);
         $stmt->execute();
     }
     //!!additional settings
