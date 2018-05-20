@@ -62,12 +62,16 @@
                 $('#TIMESTART').timepicker({'timeFormat': 'H:i'});
                 $('#TIMEEND').timepicker({'timeFormat': 'H:i'});
                 
+                $('#TIMESTARTBREAK').timepicker({'timeFormat': 'H:i'});
+                $('#TIMEENDBREAK').timepicker({'timeFormat': 'H:i'});
+                
                 $('#CUSTOMTIMESTART').timepicker({'timeFormat': 'H:i'});
                 $('#CUSTOMTIMEEND').timepicker({'timeFormat': 'H:i'});
             });
-            function validateForm() {
-                let timestartjq = $('#TIMESTART'); let validationfailed = false;
-                let timeendjq = $('#TIMEEND');
+            //validate company schedule fields. pass '' to validate schedule or 'BREAK' to validate break
+            function validateForm(in_fieldtype) {
+                let timestartjq = $(('#TIMESTART'+in_fieldtype)); let validationfailed = false;
+                let timeendjq = $(('#TIMEEND'+in_fieldtype));
                 let re=/\d\d:\d\d/;
                 if (re.test(timestartjq.val()) == false) {
                     timestartjq.css("border-color", "red");
@@ -84,17 +88,19 @@
                     let time3=time1;
                     time1 = time2;
                     time2= time3;
-                    $('#TIMESTART').timepicker('setTime', time1);
-                    $('#TIMEEND').timepicker('setTime', time2);
+                    $( ('#TIMESTART'+in_fieldtype) ).timepicker('setTime', time1);
+                    $( ('#TIMEEND'+in_fieldtype) ).timepicker('setTime', time2);
                 }
                 var hours = Math.abs(time1 - time2) / 36e5;
-                if (hours<8) {
+                if ((hours<8)&&(in_fieldtype!=='')) {
                     if (confirm('{{localizedmessages["optsmsgless8hours"]|default('Difference between time is less than 8 hours. Is it OK?')}}')) {
                         return true;
                     } else {return false;}
                 }
                 return true;
             }
+            
+            
             /**
              * 
                examine for all the possible errors.
@@ -229,11 +235,16 @@
         <h4> {{ localizedmessages['optscaption']|default('Settings page') }} </h4>
         
 <div class="div-formborder">        
-<form name="myform" action="/saveoptions" onsubmit="return validateForm();" method="post">
-        <p> {{ localizedmessages['optsdefaultschedule'] }} </p>
+<form name="myform" action="/saveoptions" onsubmit="return (validateForm() && validateForm('BREAK'));" method="post">
+        <p> {{ localizedmessages['optsdefaultschedule']|default('Company working hours') }} </p>
         <p> 
             <input id="TIMESTART" name="timestart" type="text" class="time" value="{{defaultschedule["TIMESTART"]}}" style="width: 105px"/> 
             <input id="TIMEEND" name="timeend"   type="text" class="time" value="{{defaultschedule["TIMEEND"]}}" style="width: 105px"/>
+        </p>
+        <p> {{ localizedmessages['optsdefaultbreak']|default('Company break hours') }} </p>
+        <p>
+            <input id="TIMESTARTBREAK" name="timestartbreak" type="text" class="time" value="{{defaultbreak["TIMESTART"]}}" style="width: 105px"/> 
+            <input id="TIMEENDBREAK" name="timeendbreak"   type="text" class="time" value="{{defaultbreak["TIMEEND"]}}" style="width: 105px"/>
         </p>
         <p><input type="checkbox" id="useworkschedule" name="useschedule" {% if ((commonconfig['UWSchd'] is defined) and (commonconfig['UWSchd'])) %} checked="checked" {% endif %} value="1" onchange="recalculatelimitbyworkday(this);" ><span>{{localizedmessages["optsuseworkschedule"]}}</span></p>
         {# THE FOLLOWING LINE RELATES TO THE OPTION: USE OR NOT USE THE time only limited by work day. IT IS A BIT SOPHISTICATED... ENABLE IT WHEN IT IS CLEARLY KNOWN WHAT DOES THIS OPTION SHOULD ACTIVATE #}
@@ -247,6 +258,9 @@
 <div class="div-formborder">
     <form name="myformcustomtime" action="/savecustomworktime" onsubmit="return validateFormCustomTimeWrapper();" method="post">
         <p> {{ localizedmessages['optscustomtimeheader']|default('Custom work time for worker (overrides a common schedule)') }} </p>
+        {% if barcodeentrylistfrm is empty %}
+        <p style="color:red">{{localizedmessages["optsmsgnowrokersindb"]|default('barcodes ilist is empty!')}}</p>
+        {% endif %}
         <div style="width:80%; margin-left: auto; margin-right: auto;" class="clearfix">
             <div style="width:59%; float: left">
                 <div style="width:100%">

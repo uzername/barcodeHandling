@@ -811,7 +811,9 @@ $app->get('/options[/]', function(Request $request, Response $response, array $a
     $templateTransmission["localizedmessages"] = $commonsubarray+$optionsSubarray;
     
     $defaultScheduleArray = $dbInstance->getDefaultCompanySchedule();
+    $defaultBreakArray = $dbInstance->getDefaultCompanyBreak();
     $templateTransmission["defaultschedule"] = $defaultScheduleArray;
+    $templateTransmission["defaultbreak"] = $defaultBreakArray;
     //$uwschd = $this->get('settings')['calculateTimeUseSchedule'];
     //$utlwd = $this->get('settings')["calculateTimeLimitedByWorkDay"];
     $commonconfigarray = $dbInstance->getExistingSettings();
@@ -857,13 +859,20 @@ $app->post('/removecustomworktime[/]', function(Request $request, Response $resp
     return $newResponse;
 });
 $app->post('/saveoptions[/]', function(Request $request, Response $response, array $args) {
+    session_start();
     $dbInstance = new DataBaseHandler($this->db);
     if ($dbInstance == NULL) {
         return $response->withStatus(502, "DB instance is null. Failed to get PDO instance");
     }
+    if (isset($_SESSION["login"]) == FALSE) {
+        return $response->withRedirect('/options'); // not authorized, so auth screen is shown
+    }
     $body = $request->getParsedBody();
-    $arrayToUse = ["timestart"=>$body["timestart"], "timeend"=>$body["timeend"], "dateused"=>"0001-01-02"];
+    $arrayToUse = ["timestart"=>$body["timestart"], "timeend"=>$body["timeend"], "dateused"=>"0001-01-02", "timetype"=>0];
     $dbInstance->updateCompanySchedule($arrayToUse);
+    $arrayToUse2 = ["timestart"=>$body["timestartbreak"], "timeend"=>$body["timestartbreak"], "dateused"=>"0001-01-02", "timetype"=>1];
+    $dbInstance->updateCompanySchedule($arrayToUse2);
+    
     $dbInstance->updateSettings(["USESCHEDULE"=>isset($body["useschedule"]) ? 1 : 0, "LIMITBYWORKDAYTIME"=>isset($body["limitbyworkdaytime"]) ? 1 : 0 ]);
     return $response->withRedirect('/options');
 });

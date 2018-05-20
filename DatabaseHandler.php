@@ -115,14 +115,14 @@ class DataBaseHandler {
      * @param array $arrayNewSchedule associative array with at least 4 items: time start and time end and date and timetype (0 for workhours and 1 for breaktime)
      * @return boolean the addition went smoothly
      */
-    public function addNewCompanyScheduleDay(array $arrayNewSchedule) {
-        assert( isset($arrayNewSchedule[3]) );
+    public function addNewCompanyScheduleDay(array $arrayNewSchedule) {        
         $insertScheduleQuery = "Insert Into ".$this->companyWorkTimeTableName."(TIMESTART, TIMEEND, DATEUSED, TIMETYPE) VALUES (:timestart, :timeend, :dateused, :timetype)";
         $stmt = $this->pdoInstance->prepare($insertScheduleQuery);
         $stmt->bindParam(":timestart",$arrayNewSchedule[0], PDO::PARAM_STR);
         $stmt->bindParam(":timeend",$arrayNewSchedule[1], PDO::PARAM_STR);
         $stmt->bindParam(":dateused",$arrayNewSchedule[2], PDO::PARAM_STR);
-        $stmt->bindParam(":timetype",$arrayNewSchedule[3], PDO::PARAM_INT);
+        $usedtimetype = isset($arrayNewSchedule[3])?$arrayNewSchedule[3]:0;
+        $stmt->bindParam(":timetype", $usedtimetype, PDO::PARAM_INT);
         try {
             $stmt->execute();
         } catch (PDOException $exc) {
@@ -175,7 +175,8 @@ class DataBaseHandler {
         $stmt->bindParam(":timestart",$in_CompanySchedule["timestart"], PDO::PARAM_STR);
         $stmt->bindParam(":timeend",$in_CompanySchedule["timeend"], PDO::PARAM_STR);
         $stmt->bindParam(":in_date",$in_CompanySchedule["dateused"], PDO::PARAM_STR);
-        $stmt->bindParam(":in_timetype",$in_CompanySchedule["timetype"], PDO::PARAM_INT);
+        $usedtimetype = isset($in_CompanySchedule["timetype"])?$in_CompanySchedule["timetype"]:0;
+        $stmt->bindParam(":in_timetype", $usedtimetype, PDO::PARAM_INT);
         $stmt->execute();
     }
     //!!additional settings

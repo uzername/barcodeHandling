@@ -83,9 +83,11 @@ class localeHandler {
         "page-options"=>[
             "optscaption"=>"Here be options",
             "optsdefaultschedule"=>"Common Working Schedule",
+            "optsdefaultbreak" => "Common Break Time",
             "optsuseworkschedule"=>"Involve company work schedule in calculations",
             "optsusetimeonlylimitedbyworkday"=>"Include time only in the range of working schedule",
             "optsmsgless8hours"=>"Difference between time is less than 8 hours. Is it OK?",
+            "optsmsgnowrokersindb" => "No registered barcodes detected. Check Registered Barcodes page",
             
             "optscustomtimeheader"=>"Custom work time for worker (overrides a common schedule)",
             "optscurrentdayselect"=>"Current day",
@@ -188,9 +190,11 @@ class localeHandler {
         "page-options"=>[
             "optscaption"=>"Тут будут настройки для вычислений",
             "optsdefaultschedule"=>"Обычный график работы предприятия",
+            "optsdefaultbreak" => "Перерыв в течении дня",
             "optsuseworkschedule"=>"Применять график работы предприятия при вычислениях",
             "optsusetimeonlylimitedbyworkday"=>"Учитывать только время в диапазоне рабочего дня",
             "optsmsgless8hours"=>"Разница между значениями времени составляет меньше 8 часов? Правильно?",
+            "optsmsgnowrokersindb" => "Не обнаружено записей о присвоенных штрихкодах. См. [Список зарегистрированных элементов]",
             
             "optscustomtimeheader"=>"Особый рабочий график (переопределяет общий рабочий график)",
             "optscurrentdayselect"=>"Текущий день",
