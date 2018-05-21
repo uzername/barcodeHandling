@@ -115,6 +115,30 @@ class TotalHourSpan {
         }
         $this->hours += $carryValue2;
     }
+    public function subtractDateIntervalToThis(DateInterval $in_Interval) {
+        assert($in_Interval->m == 0, "Use TotalHourSpan with smaller DateIntervals, within 1 month");
+        assert($in_Interval->y == 0, "Use TotalHourSpan with smaller DateIntervals, within 1 month, not a year");
+        $this->hours-=$in_Interval->d*24; $this->hours-=$in_Interval->h;
+        assert($this->hours>=0, "TODO: handle negative values of TotalHourSpan");
+        //subtract seconds and minutes                        
+        if ($this->seconds < $in_Interval->s) {
+            $this->seconds = $this->seconds + 60 - $in_Interval->s;
+            $this->minutes-=1;
+            if ($this->minutes<0) {
+                $this->minutes= 59;
+                $this->hours = 0;
+            }
+        } else {
+            $this->seconds -= $in_Interval->s;
+        }        
+        if ($this->minutes < $in_Interval->i) {
+            $this->minutes = $this->minutes + 60 - $in_Interval->i;
+            $this->hours -=1;
+        } else {
+            $this->minutes -= $in_Interval->i;
+        }
+        assert($this->hours>=0, "TODO: handle negative values of TotalHourSpan");
+    }
     public function addTotalHourspanToThis(TotalHourSpan $in_TotalHourspanValue) {
         $this->hours+=$in_TotalHourspanValue->hours;
         $this->minutes+=$in_TotalHourspanValue->minutes;

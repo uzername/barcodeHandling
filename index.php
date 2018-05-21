@@ -320,6 +320,8 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
            $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
            if (($refinedInvolveBreakTime==TRUE)&&($heuristicsSubtractBreakTime)) {
                //subtract break time!
+               $datespanSubtotal->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
+               $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[1] = "break";
            }
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"subtotaltime"} = $datespanSubtotal->myToString();
        }

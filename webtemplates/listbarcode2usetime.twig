@@ -84,14 +84,17 @@
                             {% endautoescape %}    
                                 {{singletime}}
                                 {% if activateTooltip == 1 %}
-                                <span class="tooltiptext">{{localizedmessages["tooltipartificialentry"]}}</span>
+                                <span class="tooltiptext">{{localizedmessages["tooltipartificialentry"]|default('added on evaluation. not present in scanlist')}}</span>
                                 {% endif %}
                             </div>
                             
                         {% endfor %}
                         </div>
-                        <div class="div-biglist-date" style="text-align: center; color:green; width:100%"> 
+                        <div class="div-biglist-date {% if ((scantimevalue.additionalstatus is defined)and(scantimevalue.additionalstatus[1] == "break")) %} tooltip {% endif %}" style="text-align: center; color:green; width:100%"> 
                             {{ scantimevalue.subtotaltime }}
+                            {% if ((scantimevalue.additionalstatus is defined)and(scantimevalue.additionalstatus[1] == "break")) %}
+                                <span class="tooltiptext">{{localizedmessages["tooltipbreaktime"]|default('Break time used')}}</span>
+                            {% endif %}
                         </div>
                     </div>
                     {% if dateinrow == 5 %}
