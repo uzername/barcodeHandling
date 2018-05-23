@@ -14,17 +14,18 @@
                     <div style="width:100%" class="clearfix">
                     <div class="printsection printsectionleft">
                         <div class="namefield">
-                    {{ singleregistration.FIELD1|default('-----')|e }} {{ singleregistration.FIELD2|default('-----')|e }} {{ singleregistration.FIELD3|default('-----')|e }}
+                    {{ singleregistration.FIELD1|default(' ')|e }} {{ singleregistration.FIELD2|default(' ')|e }} {{ singleregistration.FIELD3|default(' ')|e }}
                         </div>
                     <br>
                         <img src="http://{{thishost}}/{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" class="imgfield" />
                     <div> {{ singleregistration.RAWBARCODEREGISTERED }} </div>
+                    <div>{{ singleregistration.FIELDPOSITION }}</div>
                     </div>
                     {% set odditycounter = 2 %}
                 {%else%}
                     <div class="printsection printsectionleft">
                         <div class="namefield">
-                    {{ singleregistration.FIELD1|default('-----')|e }} {{ singleregistration.FIELD2|default('-----')|e }} {{ singleregistration.FIELD3|default('-----')|e }}
+                    {{ singleregistration.FIELD1|default(' ')|e }} {{ singleregistration.FIELD2|default(' ')|e }} {{ singleregistration.FIELD3|default(' ')|e }}
                         </div>
                     <br>
                     <img src="http://{{thishost}}/{{ singleregistration.PATHTOBARCODE }}" alt="barcodeimg" class="imgfield" />
