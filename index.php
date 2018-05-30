@@ -231,17 +231,18 @@ function prepareDataStructure($in_initialStruct) { //prepare scan history for di
  * @param type $in_Structure - obtained after prepareDataStructure
  * @param DataBaseHandler $in_injectedDBstructure
  * @param string $in_injectedLocalTimeZone
- * @return array of stdclassobject. fields: 'tableheader' - string with name of entity for which the aggregated time is calculated. 'totaltime' - total time for this entity calculated over the all dates 
+ * @return array of stdclassobject. fields: 'tableheader' - string with name of entity for which the aggregated time is calculated. 'totaltime' - total time for this entity calculated over the all dates. 'totalovertime' - total overtime for this entity calculated over the all dates
  * 'timedarray' - associative array of timestamps of scans (may also contain records added by this routine, with end-of-day working time). 
  * Key is date for which we are assembling scan facts, value is stdclass object with fields: 
  * 'subtotaltime' - aggregated value of time for this date.
+ * 'subtotalovertime' - aggregated value of overtime for this date.
  * 'timelist' - array with timestamps in string
  * 'additionalstatus' - if 'timelist' contains entries which have been artificially added then [0] has 'closedate' entry
  */
 function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injectedDBstructure, string $in_injectedLocalTimeZone) {
     $resultModifiedStructure = [];
     $itercounter=0; $preparedArraySize = count($in_Structure);
-       $defaultScheduleToUse = []; $defaultBreakToUse = [];
+       $defaultScheduleToUse = []; $defaultBreakToUse = []; 
        $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
        $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
        $injectedInvolveBreakTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
@@ -254,17 +255,18 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
        }
        
     while ($itercounter<$preparedArraySize) { //iterate over the whole structure
-       $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>""];
+       $resultModifiedStructure[$itercounter] = (object)["timedarray" => [], "tableheader"=>"", "totaltime"=>"", "totalovertime"=>""];
        $resultModifiedStructure[$itercounter]->{"tableheader"}=$in_Structure[$itercounter]->{"tableheader"};
        $datespanTotal = new TotalHourspan();
        
        foreach ($in_Structure[$itercounter]->{"timedarray"} as $keydate => $valuetimearray) {
-           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>"", "additionalstatus"=>[]];
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate] = (object)["timelist"=>[],"subtotaltime"=>"", "subtotalovertime"=>"", "additionalstatus"=>[]];
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"} = $valuetimearray;
            //sum up time between spans
                   // http://fi2.php.net/manual/en/dateinterval.construct.php
            //$datespanSubtotal = new DateInterval("P0000-00-00T00:00:00");
            $datespanSubtotal = new TotalHourspan();
+           $datespanSubtotalOvertime = new TotalHourSpan();
            $intervalCounter = 0; $totaltimescount = count($valuetimearray); 
            $detalizedBreak=(object)['breakstart'=>null, 'breakend'=>null, 'breakintrvl'=>null];
            //define break in terms of datetime class
@@ -287,7 +289,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                        $heuristicsSubtractBreakTime = FALSE;
                    } else {
                        //end of previous time segment relates to time before break, start of next previous segment relates to time after break. 
-                       //it is too tidy for a worker!
+                       //it is too tidy for a worker! He just got a little bit longer break.
                        if (isset($valuetimearray[$intervalCounter-1])) {
                            $valueprev1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter-1], new DateTimeZone($in_injectedLocalTimeZone));
                            assert($value1>$valueprev1);
@@ -303,19 +305,35 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                $intervalCounter+=2;
            }
            //if we are using this and we have exactly one item left in time array and day has finished already (we are not working with the current day)
-           if ((filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE)&&(abs($intervalCounter-$totaltimescount) == 1)) { 
-               $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
-               $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
-               $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
-               $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
-               if (($intrvl2->d!=0)&&($endOfDay>=$dateMissed) ){
-                   
-                   //if a remaining unprocessed datetime remains beyond the end of day then discard it.
-                   $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
-                   $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"}[] = $defaultScheduleToUse["TIMEEND"].':00';
-                   $datespanSubtotal->addDateIntervalToThis($intrvl3); 
-                   $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[0]="closedate";
+           
+           if ( (filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN)==TRUE) ) {
+               //check missed scan on end of day here. Worker gone home and forgot to scan...
+            if ( (abs($intervalCounter-$totaltimescount) == 1) ) { 
+                $dateMissed = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
+                $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
+                $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
+                $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+                $startOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse["TIMESTART"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+                if (($intrvl2->d!=0)&&($endOfDay>=$dateMissed) ){
+
+                    //if a remaining unprocessed datetime remains beyond the end of day then discard it.
+                    $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
+                    $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"timelist"}[] = $defaultScheduleToUse["TIMEEND"].':00';
+                    $datespanSubtotal->addDateIntervalToThis($intrvl3); 
+                    $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[0]="closedate";
+                }
+            }
+               //check overtime here
+            if ( ( ($value1 >= $startOfDay) && ($value2 <= $endOfDay) ) == FALSE ) {
+               if ($value1 < $startOfDay)  {
+                   if ($value2<=$startOfDay) {
+                       assert($value1<=$value2, "Start of period is less than its end");
+                       $datespanSubtotalOvertime->addDateIntervalToThis(datediff($value1, $value2));
+                       
+                   }
                }
+            }
+            
            }
            $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
            if (($refinedInvolveBreakTime==TRUE)&&($heuristicsSubtractBreakTime)) {
