@@ -95,6 +95,8 @@
                             {% if ((scantimevalue.additionalstatus is defined)and(scantimevalue.additionalstatus[1] == "break")) %}
                                 <span class="tooltiptext">{{localizedmessages["tooltipbreaktime"]|default('Break time used')}}</span>
                             {% endif %}
+                            <br/>
+                            <span style="color: red">({{localizedmessages["overtimetext"]|default('Overtime')}} = {{ scantimevalue.subtotalovertime }} )</span>
                         </div>
                     </div>
                     {% if dateinrow == 5 %}

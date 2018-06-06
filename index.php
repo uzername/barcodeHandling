@@ -273,7 +273,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
             if ( $refinedInvolveBreakTime==TRUE ) {
                 $detalizedBreak->{'breakstart'} = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultBreakToUse["TIMESTART"].':00', new DateTimeZone($in_injectedLocalTimeZone));
                 $detalizedBreak->{'breakend'} = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultBreakToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
-                $detalizedBreak->{'breakintrvl'} = datediff($detalizedBreak->{'breakend'}, $detalizedBreak->{'breakstart'});
+                $detalizedBreak->{'breakintrvl'} = date_diff($detalizedBreak->{'breakend'}, $detalizedBreak->{'breakstart'});
             }
            //collection of switches, indicating a usage of break.
             //[0] - scan occured before break start. [1] - scan occured after break start but before end. [2] - scan occured after break end
@@ -282,13 +282,17 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
            while ($intervalCounter<$totaltimescount-1) {
                $value1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter], new DateTimeZone($in_injectedLocalTimeZone));
                $value2 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter+1], new DateTimeZone($in_injectedLocalTimeZone));
+               $startOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse['TIMESTART'].':00', new DateTimeZone($in_injectedLocalTimeZone));
+               $endOfDay = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$defaultScheduleToUse['TIMEEND'].':00', new DateTimeZone($in_injectedLocalTimeZone));
+               
                $intrvl = date_diff($value2, $value1);
+               // BREAK TIME CALCULATION IS BEING RESOLVED HERE. most people here use break, so this case would be rare. It may be incorrect, but who knows.
                if($refinedInvolveBreakTime==TRUE) {
                    //last scan was done before break, there are no more scans
                    if (($value2<$detalizedBreak->{'breakstart'})&&($intervalCounter+2>=$totaltimescount-1)) {
                        $heuristicsSubtractBreakTime = FALSE;
                    } else {
-                       //end of previous time segment relates to time before break, start of next previous segment relates to time after break. 
+                       //end of previous time segment relates to time before break, start of next (current, on this iteration) segment (indicated by $value1) relates to time after break. 
                        //it is too tidy for a worker! He just got a little bit longer break.
                        if (isset($valuetimearray[$intervalCounter-1])) {
                            $valueprev1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter-1], new DateTimeZone($in_injectedLocalTimeZone));
@@ -296,10 +300,47 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                            if ( ($valueprev1<$detalizedBreak->{'breakstart'})&&($value1>$detalizedBreak->{'breakend'}) ) {
                                $heuristicsSubtractBreakTime = FALSE;
                            }
+                       } else {
+                           //scan was done after break start, 
+                           if ( isset($value2)&&($value2>$detalizedBreak->{'breakstart'}) ) {
+                               if ( $intervalCounter+1<=$totaltimescount-1 ) {// but no scans were done after that. do not subtract break time.
+                                    $heuristicsSubtractBreakTime = FALSE; 
+                               } else {  
+                                    $valuenext1 = DateTime::createFromFormat('d.m.Y H:i:s', $keydate.' '.$valuetimearray[$intervalCounter+1], new DateTimeZone($in_injectedLocalTimeZone));
+                                    if ($valuenext1<$detalizedBreak->{'breakend'}) { //scan was done right before the end of break
+                                        $heuristicsSubtractBreakTime = FALSE; 
+                                    } else { //scan (it indicates start of next period, btw) was done right after the period end. (do not) subtract the break.
+                                        $heuristicsSubtractBreakTime = FALSE; 
+                                    }
+                               }
+                           } else {
+                               
+                               
+                           }
                        }
                        
                    }
-               }
+               }               
+                    //check overtime here
+                       if ( (isset($value1))&&($value1 < $startOfDay) )  {
+                            if ((isset($value2)) && ($value2<=$startOfDay)) {
+                                assert($value1<=$value2, "Start of period is less than its end");
+                                $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($value1, $value2));                       
+                            } else {
+                                $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($value1, $startOfDay));
+                            }
+
+                       }
+                       if ( (isset($value2))&&($value2 > $endOfDay) ) {
+                          if (isset($value1)) {
+                            if ($value1<=$endOfDay) {
+                                $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($endOfDay, $value2));
+                            } else {
+                                $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($value1, $value2));
+                            }
+                          }
+                       }
+               
                //sum up interval. Documentation does not show a built-in function
                $datespanSubtotal->addDateIntervalToThis($intrvl); 
                $intervalCounter+=2;
@@ -322,26 +363,22 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                     $datespanSubtotal->addDateIntervalToThis($intrvl3); 
                     $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[0]="closedate";
                 }
+                if ($totaltimescount == 1) { // a single entry was on that day. apply overtime
+                    $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($dateMissed, $startOfDay));
+                }
             }
-               //check overtime here
-            if ( ( ($value1 >= $startOfDay) && ($value2 <= $endOfDay) ) == FALSE ) {
-               if ($value1 < $startOfDay)  {
-                   if ($value2<=$startOfDay) {
-                       assert($value1<=$value2, "Start of period is less than its end");
-                       $datespanSubtotalOvertime->addDateIntervalToThis(datediff($value1, $value2));
-                       
-                   }
-               }
-            }
+
             
            }
-           $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
+           
            if (($refinedInvolveBreakTime==TRUE)&&($heuristicsSubtractBreakTime)) {
                //subtract break time!
                $datespanSubtotal->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
                $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"additionalstatus"}[1] = "break";
            }
+           $datespanTotal->addTotalHourspanToThis($datespanSubtotal);
            $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"subtotaltime"} = $datespanSubtotal->myToString();
+           $resultModifiedStructure[$itercounter]->{"timedarray"}[$keydate]->{"subtotalovertime"} = $datespanSubtotalOvertime->myToString();
        }
        $resultModifiedStructure[$itercounter]->{"totaltime"}=$datespanTotal->myToString();
        

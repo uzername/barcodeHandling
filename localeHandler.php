@@ -58,6 +58,7 @@ class localeHandler {
             "tableheaderv3"=>"List of scanned items, aggregated, v3",
             "scanlisttotal"=>"Total amount: ",
             "tooltipartificialentry"=>"This entry was added because company's schedule is used",
+            "overtimetext"=>"Overtime",
         ],
         "page-scanlist-special"=>[
             "weekdays"=>['1'=>'Monday', '2'=>'Tuesday', '3'=>'Wednesday', '4'=>'Thursday', '5'=>'Friday', '6'=>'Saturday', '7'=>'Sunday']
@@ -164,7 +165,8 @@ class localeHandler {
             "tableheaderv2"=>"Список фактов сканирования штрихкода - сгруппирован, вариант 2",
             "tableheaderv3"=>"Список фактов сканирования штрихкода - сгруппирован, обработан, вариант 3",
             "scanlisttotal"=>"Всего: ",
-            "tooltipartificialentry"=>"Эта запись была добавлена потому что используется график работы компании (ее нету в списке сканирования)"
+            "tooltipartificialentry"=>"Эта запись была добавлена потому что используется график работы компании (ее нету в списке сканирования)",
+            "overtimetext"=>"Переработка",
             ],
         "page-scanlist-special"=>[
             "weekdays"=>['1'=>'Понедельник', '2'=>'Вторник', '3'=>'Среда', '4'=>'Четверг', '5'=>'Пятница', '6'=>'Суббота', '7'=>'Воскресенье']

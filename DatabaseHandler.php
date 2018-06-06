@@ -97,7 +97,7 @@ class DataBaseHandler {
             }
             
         //predefined  settings
-        $predefinedSettingsItem = ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>0];
+        $predefinedSettingsItem = ["USESCHEDULE"=>1,"LIMITBYWORKDAYTIME"=>1];
             $reconSettingsQuery = "SELECT COUNT(*) AS FOUND FROM ".$this->settingsTableName;
             $stmt4 = $this->pdoInstance->prepare($reconSettingsQuery);
             $stmt4->execute();
