@@ -275,16 +275,22 @@ class DataBaseHandler {
         $SHTN = $this->scanHistoryTableName;
         $RBTN = $this->existingBarcodesTableName;
         $CWTN = $this->customWorkTimeTableName;
-        
+        /* This query was not working properly
         $sqlQuery = "select ".$SHTN.".ID as SCANID, ".$RBTN.".ID AS BCODE, ".$RBTN.".RAWBARCODEREGISTERED AS RAWBCODE, ".$RBTN.".FIELD1, ".$RBTN.".FIELD2, ".$RBTN.".FIELD3, ".$SHTN.".SCANDATETIME"
                 . " FROM ( (".$RBTN." left join ".$SHTN." on ".$SHTN.".KNOWNBARCODE_ID = ".$RBTN.".ID) LEFT JOIN ".$CWTN." ON ".$CWTN.".BARCODE_ID = ".$RBTN.".ID )  WHERE ((".$CWTN.".BARCODE_ID IS NULL) AND ( (SCANDATETIME IS NULL) OR (SCANDATETIME BETWEEN :val1 AND :val2 ) ) ) order by RAWBCODE, SCANDATETIME";
+         * 
+         */
+        //it may be useful to optimize this. It selects scans within a certain range, and complements the result with any other entries from barcode scans table
+        $sqlQuery = "select SCANID, ".$RBTN.".ID AS BCODE2, ".$RBTN.".RAWBARCODEREGISTERED AS RAWBCODE2, FIELD1, FIELD2, FIELD3, SCANDATETIME "
+                . "FROM ".$RBTN." LEFT JOIN (select ".$SHTN.".ID as SCANID, ".$RBTN.".ID AS BCODE, ".$RBTN.".RAWBARCODEREGISTERED AS RAWBCODE, ".$RBTN.".FIELD1 as FLD1, ".$RBTN.".FIELD2 as FLD2, ".$RBTN.".FIELD3 as FLD3, ".$SHTN.".SCANDATETIME FROM "
+                . "( (".$RBTN." left join ".$SHTN." on ".$SHTN.".KNOWNBARCODE_ID = ".$RBTN.".ID) LEFT JOIN ".$CWTN." ON ".$CWTN.".BARCODE_ID = ".$RBTN.".ID )  WHERE ((".$CWTN.".BARCODE_ID IS NULL) AND ( (SCANDATETIME IS NULL) OR (SCANDATETIME BETWEEN :val1 AND :val2 ) ) ) order by RAWBCODE, SCANDATETIME)  ON BCODE=".$RBTN.".ID";
         $stmt = $this->pdoInstance->prepare($sqlQuery);
         $stmt->bindParam(":val1", $in_dateTimeStart);
         $stmt->bindParam(":val2", $in_dateTimeEnd);
         $stmt->execute();
         $allScan=[];        
         while ($row=$stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $allScan[] = (object)['SCANID'=>$row['SCANID'], 'BCODE'=>$row['BCODE'], 'RAWBARCODE'=>$row['RAWBCODE'], 'SCANDATETIME'=>$row['SCANDATETIME'],
+            $allScan[] = (object)['SCANID'=>$row['SCANID'], 'BCODE'=>$row['BCODE2'], 'RAWBARCODE'=>$row['RAWBCODE2'], 'SCANDATETIME'=>$row['SCANDATETIME'],
                 "FIELD1"=>$row["FIELD1"], "FIELD2"=>$row["FIELD2"], "FIELD3"=>$row["FIELD3"] ];            
         }
         return $allScan;
