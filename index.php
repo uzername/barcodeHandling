@@ -406,6 +406,7 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
        $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
        $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
        $injectedUseSchedule = filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN);
+       $injectedUseBreakTime = filter_var($injectedLimitByWorkDayTime, FILTER_VALIDATE_BOOLEAN);
        if ($injectedUseSchedule==TRUE) {
             $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
        }
@@ -415,9 +416,9 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
         $dateIterator->add(new DateInterval('P1D'));
         $dateNumericIterator++;
     }
-    $prevTimeStamp = null; $currentPeriodClosed = TRUE; $prevIndex = -1;
-    foreach ($in_Structure as $valueFromStructure) {
-        
+    $prevTimeStamp = null; $currentPeriodClosed = TRUE; $prevIndex = -1; $storedBCODE = null;
+    foreach ($in_Structure as $valueFromStructure) { //process all the records
+        $storedBCODE = $valueFromStructure->{"BCODE"};
         //+++++++++++++ the period is still opened
             if (( $injectedUseSchedule==TRUE ) && ($currentPeriodClosed === FALSE)) {
                $dateMissed = $prevTimeStamp;    
@@ -469,7 +470,7 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
         }
         // http://php.net/manual/ru/function.property-exists.php
         if ((property_exists($valueFromStructure, "SCANID")==FALSE)||($valueFromStructure->{"SCANID"} === NULL)) {
-            //it shows that this user has no scans in period, so SCANID is set to NULL. By query,the result contains only one record with SCANID == NULL if database is healthy
+            //it shows that this user has no scans in period, so SCANID is set to NULL. By query,the result contains only one record for user with SCANID == NULL if database is healthy
         } else {  //this user has scan
             //get the corresponding index in date array
             $indexFound = null; $currentIndex = 0;
@@ -500,6 +501,25 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
             
         }
         $prevIndex++;
+    }
+    //aww, we are done with records, but period is still opened. Period openness is checked at the beginning of iteration at previous cycle , but in this case we do not get to it, so check it here
+    $finishedDayInterval = date_diff($prevTimeStamp, new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone)), true);
+    if (( $injectedUseSchedule==TRUE ) && ($currentPeriodClosed === FALSE) && ( $finishedDayInterval->d >= 1)) {
+        //close period with autosubstitution on end of day.
+        $missedDateStr = $prevTimeStamp->format("Y-m-d");
+        $indexFound = null; $currentIndex = 0;
+            foreach ($rawResult->{'AllDates'} as $valueDate) {
+                if ( $valueDate[0] == $missedDateStr ) {
+                    $indexFound = $currentIndex;
+                    break;
+                }
+                $currentIndex++;
+            }
+        if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$prevTimeStamp->format("Y-m-d H:i:s")." NOT  IN RANGE"); return; }
+        $endOfDayTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $missedDateStr." ".$defaultScheduleToUse['TIMEEND'].":00", new DateTimeZone($in_injectedLocalTimeZone));
+        $intrvlfinalizedaftercycle = date_diff($endOfDayTimeStamp, $prevTimeStamp, TRUE);
+        $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvlfinalizedaftercycle);
+        $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][0]->myToFloat();
     }
     return $rawResult;
 }
