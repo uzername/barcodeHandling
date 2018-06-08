@@ -367,7 +367,7 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                     $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($dateMissed, $startOfDay));
                 }
             }
-
+            
             
            }
            
@@ -395,23 +395,29 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
  * @param DataBaseHandler $in_injectedDBstructure - it is handy to have Database structure around
  * @return stdClass fields: 'AllDates' (each item is array with 2 elements:date string and number of week (1 is monday, 7 is sunday)) and 'AllUsers'. 
  * 'AllUsers' is associative array with keys of BarcodeText and values of stdClass object. Each stdClass object has 2 properties: 'timedarray' and 'display'.
- * 'display' is a string and 'timedarray' is array with 2 items.
+ * 'display' is a string and 'timedarray' is array with numerical indexes. These indexes correspond to entries in AllDates Array. If some index is not set then it means that there is no entries for this date.
+ * If some index is set then the entry is array. 
+ * Item[0] is TotalHourSpan for total time, Item[1] is its converted float value. Item[2] is 0 (break time not used) or 1 (break time used). Item[3] is TotalHourSpan for total overtime, Item[4] is float
  */
 function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateTime $in_dateTimeEnd, $in_injectedLocalTimeZone, DataBaseHandler $in_injectedDBstructure) {
     $rawResult = (object)['AllDates'=>[], 'AllUsers'=>[]];
     $dateIterator = $in_dateTimeStart; $dateNumericIterator = 0;
-    
-       $defaultScheduleToUse = [];
+       //by default we assume that break time is subtracted
+       $defaultScheduleToUse = []; $defaultBreakToUse = []; $heuristicsSubtractBreakTime = TRUE;
        $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
        $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
        $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
        $injectedUseSchedule = filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN);
-       $injectedUseBreakTime = filter_var($injectedLimitByWorkDayTime, FILTER_VALIDATE_BOOLEAN);
+       $refinedInvolveBreakTime = filter_var($injectedLimitByWorkDayTime, FILTER_VALIDATE_BOOLEAN);
        if ($injectedUseSchedule==TRUE) {
             $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
        }
+       if ($refinedInvolveBreakTime == TRUE) {
+           $defaultBreakToUse = $in_injectedDBstructure->getDefaultCompanyBreak();
+       }
+       $detalizedBreak=(object)['breakstart'=>null, 'breakend'=>null, 'breakintrvl'=>null];
     
-    while ($dateIterator<=$in_dateTimeEnd) {
+    while ($dateIterator<=$in_dateTimeEnd) { //initialize dates for header
         $rawResult->{'AllDates'}[]=[$dateIterator->format("Y-m-d"), intval( $dateIterator->format("N") )];
         $dateIterator->add(new DateInterval('P1D'));
         $dateNumericIterator++;
@@ -428,15 +434,20 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
                //checking switchout to another user
                $bronzeKeyOfUserSwitching = ($valueFromStructurePrev->{"BCODE"} != $valueFromStructure->{"BCODE"});
                
-               if ($brassKeyOfDateTimeSwitching || $bronzeKeyOfUserSwitching) {
-               
+               if (($refinedInvolveBreakTime == TRUE)&&($brassKeyOfDateTimeSwitching)&&(FALSE) ) { //make a break for current datetime. do not use it here
+                    $detalizedBreak->{'breakstart'} = DateTime::createFromFormat('d.m.Y H:i:s', explode(" ",$valueFromStructure->{"SCANDATETIME"})[0].' '.$defaultBreakToUse["TIMESTART"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+                    $detalizedBreak->{'breakend'} = DateTime::createFromFormat('d.m.Y H:i:s', explode(" ",$valueFromStructure->{"SCANDATETIME"})[0].' '.$defaultBreakToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
+                    $detalizedBreak->{'breakintrvl'} = date_diff($detalizedBreak->{'breakend'}, $detalizedBreak->{'breakstart'});
+               }
+               //above two conditions indicate that we should sum up a terms of time. Also resolve here break time
+               if ($brassKeyOfDateTimeSwitching || $bronzeKeyOfUserSwitching) {               
                $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
                $endTimeAsArray = explode(":", $defaultScheduleToUse["TIMEEND"] );
                $intrvl2 = date_diff($injectedLocalTime, $dateMissed, TRUE);
                $endOfDay = clone $dateMissed;
                date_time_set($endOfDay, intval($endTimeAsArray[0]), intval($endTimeAsArray[1]), 0);
                 if (($intrvl2->d!=0)&&($endOfDay>=$dateMissed) ) {                   
-                   //if a remaining unprocessed datetime remains beyond the end of day then discard it.
+                   //if a remaining unprocessed datetime remains beyond the end of day then discard it. Else use it
                    $intrvl3= date_diff($dateMissed, $endOfDay, TRUE);
                    
                    $indexFound = null; $currentIndexOfDate = 0;
@@ -450,23 +461,28 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
                     if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$valueFromStructurePrev->{'SCANDATETIME'}." NOT  IN RANGE"); return; }
                    
                    
-                    $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvl3);
+                    $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvl3);                    
+                    //SUBTRACT BREAK TIME HERE. (NOPE)
+                    if (($heuristicsSubtractBreakTime == TRUE)&&($refinedInvolveBreakTime==TRUE)&&(FALSE)) {
+                        $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
+                    }
                     $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$valueFromStructurePrev->{"BCODE"}]->{'timedarray'}[$indexFound][0]->myToFloat();
+                    //BREAK TIME HANDLING ENDS
                     $currentPeriodClosed = TRUE;
-               }
-               
+                    $heuristicsSubtractBreakTime = TRUE; //back to defaults
+                }
+                
                }
             }
         //+++++++++++++
         
         //have we met this user before ?
-        if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) { //...no, we have not
-            
-            
+        if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) { //...no, we have not                        
             $prevTimeStamp = null; $currentPeriodClosed = TRUE;
             $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}] = (object)['timedarray'=>[], 'display'=>''];
             $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'display'}=$valueFromStructure->{"FIELD1"}." ".$valueFromStructure->{"FIELD2"}." ".$valueFromStructure->{"FIELD3"}
                                                                               ."[".$valueFromStructure->{"BCODE"}.",".$valueFromStructure->{"RAWBARCODE"}."]";
+            $heuristicsSubtractBreakTime = TRUE;
         }
         // http://php.net/manual/ru/function.property-exists.php
         if ((property_exists($valueFromStructure, "SCANID")==FALSE)||($valueFromStructure->{"SCANID"} === NULL)) {
@@ -483,11 +499,12 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
             }
             if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$valueFromStructure->{'SCANDATETIME'}." NOT  IN RANGE"); return; }
             if (key_exists($indexFound, $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}) == FALSE) {
-                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound] = [new TotalHourSpan(),0.0];
+                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound] = [new TotalHourSpan(),0.0,0,new TotalHourSpan(),0.0];
             } //else { //we have some recordings with this period and this user
                 if ($currentPeriodClosed === TRUE) { //got new entry, and we have this period indicated as closed; reopen it
                     $prevTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $valueFromStructure->{"SCANDATETIME"}, new DateTimeZone($in_injectedLocalTimeZone));
                     $currentPeriodClosed = FALSE;
+                    $heuristicsSubtractBreakTime = TRUE;
                 } else { //find difference between dates, close the period
                     $value2 = DateTime::createFromFormat("Y-m-d H:i:s", $valueFromStructure->{"SCANDATETIME"}, new DateTimeZone($in_injectedLocalTimeZone));
                     $value1 = $prevTimeStamp;
@@ -496,17 +513,52 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
                     $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvln);
                     $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][0]->myToFloat();
                     $currentPeriodClosed = TRUE;
+                    
+                    
+                    $startOfDay = DateTime::createFromFormat("Y-m-d H:i:s", $dateMissed->format("Y-m-d")." ".$defaultScheduleToUse['TIMESTART'].":00", new DateTimeZone($in_injectedLocalTimeZone));
+                    $endOfDayRedefined = DateTime::createFromFormat("Y-m-d H:i:s", $dateMissed->format("Y-m-d")." ".$defaultScheduleToUse['TIMEEND'].":00", new DateTimeZone($in_injectedLocalTimeZone));
+                    //add here overtime handling
+                        if ( (isset($value1))&&($value1 < $startOfDay) )  {
+                          if ((isset($value2)) && ($value2<=$startOfDay)) {
+                            assert($value1<=$value2, "Start of period is less than its end");
+                            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->addDateIntervalToThis(date_diff($value1, $value2));
+                            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][4] = $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->myToFloat();
+                          } else {
+                            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->addDateIntervalToThis(date_diff($value1, $startOfDay));
+                            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][4] = $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->myToFloat();
+                          }
+                        }
+                        
+                        if ( (isset($value2))&&($value2 > $endOfDayRedefined) ) {
+                          if (isset($value1)) {
+                            if ($value1<=$endOfDay) {
+                                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->addDateIntervalToThis(date_diff($endOfDayRedefined, $value2));
+                                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][4] = $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->myToFloat();
+                            } else {
+                                $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'timedarray'}[$indexFound][3]->addDateIntervalToThis(date_diff($value1, $value2));
+                            }
+                          }
+                        }
+
+                    //overtime!
+                    
                 }
             //}
             
         }
         $prevIndex++;
     }
-    //aww, we are done with records, but period is still opened. Period openness is checked at the beginning of iteration at previous cycle , but in this case we do not get to it, so check it here
+    //aww, we are done with records (check that there was at least one record), but period is still opened. Period openness is checked at the beginning of iteration at previous cycle , but in this case we do not get to it, so check it here
+    //do not involve these calculations if it exceeds end of day
+    //seems like that this fragment is not necessary any more. Or not? Hmmmm~
+    $fragmentSealed = FALSE;
+    if (isset($prevTimeStamp)&&($prevTimeStamp!=NULL)&&($fragmentSealed == FALSE)) {
+    $missedDateStr = $prevTimeStamp->format("Y-m-d");
+    $endOfDayTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $missedDateStr." ".$defaultScheduleToUse['TIMEEND'].":00", new DateTimeZone($in_injectedLocalTimeZone));
+    $startOfDayTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $missedDateStr." ".$defaultScheduleToUse['TIMESTART'].":00", new DateTimeZone($in_injectedLocalTimeZone));
     $finishedDayInterval = date_diff($prevTimeStamp, new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone)), true);
-    if (( $injectedUseSchedule==TRUE ) && ($currentPeriodClosed === FALSE) && ( $finishedDayInterval->d >= 1)) {
+    if (( $injectedUseSchedule==TRUE ) && ($currentPeriodClosed === FALSE) && ( $finishedDayInterval->d >= 1) && ($endOfDayTimeStamp>$prevTimeStamp)) {
         //close period with autosubstitution on end of day.
-        $missedDateStr = $prevTimeStamp->format("Y-m-d");
         $indexFound = null; $currentIndex = 0;
             foreach ($rawResult->{'AllDates'} as $valueDate) {
                 if ( $valueDate[0] == $missedDateStr ) {
@@ -516,12 +568,55 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
                 $currentIndex++;
             }
         if ($indexFound === NULL) { throw new OutOfBoundsException("DATE ".$prevTimeStamp->format("Y-m-d H:i:s")." NOT  IN RANGE"); return; }
-        $endOfDayTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $missedDateStr." ".$defaultScheduleToUse['TIMEEND'].":00", new DateTimeZone($in_injectedLocalTimeZone));
         $intrvlfinalizedaftercycle = date_diff($endOfDayTimeStamp, $prevTimeStamp, TRUE);
         $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][0]->addDateIntervalToThis($intrvlfinalizedaftercycle);
         $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][1] = $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][0]->myToFloat();
+        
+        //actually, overtime cause may happen here too. But only for start of day
+                        if ( (isset($prevTimeStamp))&&($prevTimeStamp < $startOfDayTimeStamp) )  {
+                          $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][3]->addDateIntervalToThis(date_diff($prevTimeStamp, $startOfDayTimeStamp, TRUE));  
+                          $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][4] = $rawResult->{'AllUsers'}[$storedBCODE]->{'timedarray'}[$indexFound][3]->myToFloat();
+                        }
+        //overtime!
+        
+    }
     }
     return $rawResult;
+}
+
+/**
+ * Since aggregateDataStructure does not calculate break time, utilize a separate subroutine for it
+ * it is assumed that this array is sorted
+ * @param $in_Structure1 - a structure, sent to aggregateDataStructure
+ * @param $in_Structure2 - a structure, obtained from aggregateDataStructure
+ */
+function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, DataBaseHandler $in_injectedDBstructure, $in_injectedLocalTimeZone) {
+       $structureToReturn = $in_Structure2;
+       $defaultScheduleToUse = []; $defaultBreakToUse = []; $heuristicsSubtractBreakTime = TRUE;
+       $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
+       $injectedUseSchedule = $configurationsOfAlgorithm["USESCHEDULE"];
+       $injectedLimitByWorkDayTime = $configurationsOfAlgorithm["LIMITBYWORKDAYTIME"];
+       $injectedUseSchedule = filter_var($injectedUseSchedule, FILTER_VALIDATE_BOOLEAN);
+       $refinedInvolveBreakTime = filter_var($injectedLimitByWorkDayTime, FILTER_VALIDATE_BOOLEAN);
+       if ($injectedUseSchedule==TRUE) {
+            $defaultScheduleToUse=$in_injectedDBstructure->getDefaultCompanySchedule();
+       }
+       if ($refinedInvolveBreakTime == TRUE) {
+           $defaultBreakToUse = $in_injectedDBstructure->getDefaultCompanyBreak();
+       }
+       //break time will be set for every date separately
+       $detalizedBreak=(object)['breakstart'=>null, 'breakend'=>null, 'breakintrvl'=>null];
+    $countOfStructure = count($in_Structure1);
+    if ($injectedUseSchedule == FALSE || $refinedInvolveBreakTime == FALSE) { return $in_Structure2; }
+    $prevTimeStamp = NULL; $currTimeStamp = NULL;
+    $i=0;
+    while ($i < $countOfStructure) { //iterating over the raw scantime structure
+        if (isset($in_Structure2->{'SCANDATETIME'}) == FALSE) {continue;}
+        $usr_entity_bcode=null;
+        do { 
+            $usr_entity_bcode = $in_Structure1[i]->{'BCODE'}; 
+        } while ( ($usr_entity_bcode)&&($i < $countOfStructure) );
+    }
 }
 ///*********************
 //render big formal template 
@@ -638,6 +733,7 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
             //expand data structure with workers with special schedule.
             //$expandedscanTimeValues = expandDataStructure($updatedscanTimeValues);
         $templateTransmission["scanlist"] = $updatedscanTimeValues;
+       $updatedscanTimeValues2 = postcalculateAggregatedDataStructure($rawscanTimeValues, $updatedscanTimeValues, $dbInstance);
         return $this->view->render($response, "listbarcode3.twig",$templateTransmission);
         //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
         //return $response->withHeader('Content-type', 'text/html')->write($debugLine);
