@@ -631,17 +631,26 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
        $detalizedBreak=(object)['breakstart'=>null, 'breakend'=>null, 'breakintrvl'=>null, 'breakintrvlfloat'=>0.0];
     $countOfStructure = count($in_Structure1);
     if ($injectedUseSchedule == FALSE || $refinedInvolveBreakTime == FALSE) { return $in_Structure2; }
-    //happens when no entries available for display
-    if (($countOfStructure == 1)&&($in_Structure1[0]->{'SCANDATETIME'} == null)) { return $in_Structure2; }
     $prevTimeStamp = NULL; $currTimeStamp = NULL; $prevUsrStamp = NULL; $currUsrStamp = NULL;
     // $i slides over $in_Structure1 but $j serves as an internal counter for streak
     $i=0; $j = 0;
     $streakPreviousDate = NULL; //a previous date in a streak
     $subtractBreakTime = false; //should we subtract a break time?
     while ($i < $countOfStructure) { //jester-style iteration over the raw scantime structure
+            //happens when no entries available for display
+            if (($in_Structure1[$i]->{'SCANDATETIME'} == null)&&($in_Structure1[$i]->{'SCANID'} == null)) { $i++; 
+             $j = 0;
+            $streakPreviousDate = NULL;
+            $subtractBreakTime = false;
+            $brassKeyOfDateSwitching = false;
+            $bronzeKeyOfUserSwitching = false;
+            continue; 
+            }
         $currTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $in_Structure1[$i]->{'SCANDATETIME'}, new DateTimeZone($in_injectedLocalTimeZone) );
         $currUsrStamp = $in_Structure1[$i]->{'BCODE'};
-        // if one of these keys is turned then we need to recalculate break time
+        // if one of these keys is turned then we need to recalculate break time and end the streak. 
+        // $brassKeyOfDateSwitching == true when the current date in scan array is 1 day more than the previous one.
+        // $bronzeKeyOfUserSwitching == true when the entity for scan is different then previous one.
         $brassKeyOfDateSwitching = false; $bronzeKeyOfUserSwitching = false;
         if (isset($prevTimeStamp)&&($prevTimeStamp!=NULL) ) {
             //$finishedDayInterval = date_diff($prevTimeStamp, $currTimeStamp, true);
@@ -659,15 +668,15 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
             $detalizedBreak->{'breakstart'} = DateTime::createFromFormat('Y-m-d H:i:s', explode(" ",$in_Structure1[$i]->{"SCANDATETIME"})[0].' '.$defaultBreakToUse["TIMESTART"].':00', new DateTimeZone($in_injectedLocalTimeZone));
             $detalizedBreak->{'breakend'} = DateTime::createFromFormat('Y-m-d H:i:s', explode(" ",$in_Structure1[$i]->{"SCANDATETIME"})[0].' '.$defaultBreakToUse["TIMEEND"].':00', new DateTimeZone($in_injectedLocalTimeZone));
             $detalizedBreak->{'breakintrvl'} = date_diff($detalizedBreak->{'breakend'}, $detalizedBreak->{'breakstart'});
-            $detalizedBreak->{'breakintrvlfloat'} = $detalizedBreak->{'breakintrvl'}->d*24.0+$detalizedBreak->{'breakintrvl'}->h+$detalizedBreak->{'breakintrvl'}->m/60;
+            $detalizedBreak->{'breakintrvlfloat'} = $detalizedBreak->{'breakintrvl'}->d*24.0+$detalizedBreak->{'breakintrvl'}->h+$detalizedBreak->{'breakintrvl'}->i/60;
         }
         //unlock the gate of breaktime subtract resolving. End a streak. Find out whether to subtract break time or not.
         if ($bronzeKeyOfUserSwitching || $brassKeyOfDateSwitching) {
             $UsrTagToUse = NULL; if ($bronzeKeyOfUserSwitching) { $UsrTagToUse = $prevUsrStamp; } else { $UsrTagToUse = $currUsrStamp; }
             $UsrStampToUse = NULL; if ($brassKeyOfDateSwitching) {$UsrStampToUse = $prevTimeStamp; } else { $UsrStampToUse = $currTimeStamp; }
             $j -=1; //compensate it, because it has incremented when we got a user switching
-            if ( isset($streakPreviousDate) ) {
-                if (($streakPreviousDate==NULL)) { //we are ready to recalculate the breaktime. there was only one date during streak
+            //if ( isset($streakPreviousDate) ) {
+                if ( (isset($streakPreviousDate) == false) || ($streakPreviousDate==NULL)) { //we are ready to recalculate the breaktime. there was only one date during streak
                     if ($currTimeStamp<$detalizedBreak->{'breakstart'}) {
                         $subtractBreakTime = true;
                     }
@@ -678,11 +687,12 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
                         
                     }
                 }
-            }
+            //}
             if ($subtractBreakTime) {
                         $foundindex = obtainIndexFromStructure($in_Structure2,$UsrStampToUse);
                         $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][2] = 1;
                         $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][1] -= $detalizedBreak->{'breakintrvlfloat'} ;
+                        $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][0]->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
             }
             $j = 0;
             $streakPreviousDate = NULL;
@@ -697,6 +707,15 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
             }
             $streakPreviousDate = $currTimeStamp;
             $j++;
+        }
+        if ( (($currTimeStamp<$detalizedBreak->{'breakstart'})&&($i+1 == $countOfStructure)) //pay attention to the last item in array
+        || 
+        (($currTimeStamp<$detalizedBreak->{'breakstart'})&&($in_Structure1[$i+1]->{'SCANDATETIME'} == null)&&($in_Structure1[$i+1]->{'SCANID'} == null)&&($i+2 == $countOfStructure)) ) //may happen in some rare testcases
+        { 
+                        $foundindex = obtainIndexFromStructure($in_Structure2,$currTimeStamp);
+                        $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][2] = 1;
+                        $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][1] -= $detalizedBreak->{'breakintrvlfloat'} ;
+                        $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][0]->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
         }
         $prevTimeStamp = $currTimeStamp;
         $prevUsrStamp = $currUsrStamp;
