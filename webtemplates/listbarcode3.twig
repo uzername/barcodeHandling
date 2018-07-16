@@ -55,7 +55,13 @@
                     <th class="aggregatedtable-goodborder aggregatedtable-th">...</th>
                     {% set datessize = scanlist.AllDates|length %}
                     {% for dateitem in scanlist.AllDates %}
-                    <th class="aggregatedtable-goodborder aggregatedtable-th"> {{dateitem[0]}} <br /> {{localizedmessages['weekdays'][dateitem[1]]}} </th>
+                    {% if (dateitem[1]<6) %}
+                        <th class="aggregatedtable-goodborder aggregatedtable-th"> 
+                    {% else %}
+                        <th class="aggregatedtable-goodborder aggregatedtable-th aggregatedtable-th-holiday">
+                    {% endif %}
+                        {{dateitem[0]}} <br /> {{localizedmessages['weekdays'][dateitem[1]]}} 
+                    </th>
                     {% endfor %}
                 </tr>
             </thead> 
@@ -66,11 +72,19 @@
                     {% for i in 1..datessize %}
                         
                             {% if arrayvalue.timedarray[i-1] is defined %}
+                                {% if (scanlist.AllDates[i-1][1]<6) %}
                             <td class="aggregatedtable-goodborder aggregatedtable-td">    
+                                {% else %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-td aggregatedtable-td-holiday">            
+                                {% endif%}
                                 <span>{{arrayvalue.timedarray[i-1][0]}}</span> <br/>
                                 <span>{{arrayvalue.timedarray[i-1][1]|number_format(4,'.')}}</span>
                             {% else %}
+                                {% if (scanlist.AllDates[i-1][1]<6) %}
                             <td class="aggregatedtable-goodborder aggregatedtable-noentries aggregatedtable-td">    
+                                {% else %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-td-holiday aggregatedtable-td" >
+                                {% endif %}
                                 <span>00:00:00</span> <br/> <span>0.0</span>
                             {% endif %}
                         </td>
@@ -79,12 +93,20 @@
                 <tr>
                     {%for j in 1..datessize %}
                         {% if arrayvalue.timedarray[j-1] is defined %}
+                            {% if (scanlist.AllDates[j-1][1]<6) %}
                             <td class="aggregatedtable-goodborder aggregatedtable-td" style="color: red">
+                            {% else %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-td aggregatedtable-td-holiday" style="color: red">
+                            {% endif %}
                                 <div class="tooltip">{{arrayvalue.timedarray[j-1][3] | default("00:00:00")}} <span class="tooltiptext">{{localizedmessages["overtimetext"]|default('Overtime')}}</span> </div> <br/>
                                 <span>{{arrayvalue.timedarray[j-1][4]|number_format(4,'.')|default('value')}}</span>
                                 
                         {% else %}
-                            <td class="aggregatedtable-goodborder aggregatedtable-noentries aggregatedtable-td">
+                                {% if (scanlist.AllDates[j-1][1]<6) %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-noentries aggregatedtable-td">    
+                                {% else %}
+                            <td class="aggregatedtable-goodborder aggregatedtable-td-holiday aggregatedtable-td" >
+                                {% endif %}
                                 <span>00:00:00</span> <br/> <span>0.0</span>
                         {% endif %}
                         </td>

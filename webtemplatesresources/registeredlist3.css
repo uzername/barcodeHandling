@@ -10,3 +10,6 @@
     font-family: monospace;
     min-width: 82px;
 }
+.aggregatedtable-th-holiday, .aggregatedtable-td-holiday {
+    background-color: pink;
+}
