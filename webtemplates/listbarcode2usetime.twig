@@ -46,6 +46,9 @@
             <a href="/list/v2?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}" id="filterbydate">{{localizedmessages["filterbydate"]|default('[By Date]')}}</a>
         </div>
         <h4>{{localizedmessages["tableheaderv2"]}}</h4>
+        <div style="width:100%" style="margin-bottom:10px">
+         <a href="/list/v2?from={{datetime["fromstring"]}}&to={{datetime["tostring"]}}&out=xlsx" id="getxlsx">{{localizedmessages["getxlsx"]|default('[XLSX]')}}</a>
+         </div>
         <div id="div-biglist-common" class="div-biglist-border" >
         {% for personitem in scanlist %}
             <div class="div-biglist-nameheader div-biglist-border" >

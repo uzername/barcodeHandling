@@ -3,3 +3,4 @@ templatecache/*
 logs/*
 data/barcodes/*
 data/simplebase.db
+XLSX/*
