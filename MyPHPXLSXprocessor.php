@@ -30,7 +30,8 @@ function renderV2asXLSX($in_preparedStructureForV2, $in_folderToSaveXLSX,$in_tim
     $pathToSave = checkExistenceOfXLSXFolderAndRecreateIt($in_folderToSaveXLSX);
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
-$sheet->setCellValue('A1', 'Hello World !');
+$customHeaderTable=$in_preparedStructureForV2["localizedmessages"]["scannedlist2"]."( ".$in_preparedStructureForV2["datetime"]["from"]." - ".$in_preparedStructureForV2["datetime"]["to"]." )";
+$sheet->setCellValue('A1', $customHeaderTable);
 $datesInRow = 5; //number of dates in a single row. $datesInRow indicates a size of Tier
 $currentRow = 2;
 foreach ($in_preparedStructureForV2["scanlist"] as $valueScanlist) { //iterate over all persons
@@ -39,18 +40,21 @@ foreach ($in_preparedStructureForV2["scanlist"] as $valueScanlist) { //iterate o
     $currentRowMaximum = 1; //how many rows does a list of scans require?
     $currentRowMaximum_Tier = 0;
     $currentIterCntr = 0; $currentIterTier = 0; $currentTierXLSXcntr = 'B'; /*that is a counter*/
-    
+    $currentTierKeys = [];
     foreach ($valueScanlist->{"timedarray"} as $timedArrayKey => $timedArrayEntity) { //setting up dates        
         if ($currentIterCntr % $datesInRow == 0) { //tier switching?
             $currentIterTier+=1;
             $currentRow+=1;
+            $currentRowMaximum_Tier = $currentRow;
             $currentTierXLSXcntr = 'B'; 
+            $currentTierKeys = [];
         }
+        $currentTierKeys[] = $timedArrayKey;
         $currentTierXLSXcntrnext = getPHPIncrementedXLSIndex($currentTierXLSXcntr);
         $spreadsheet->getActiveSheet()->mergeCells("$currentTierXLSXcntr$currentRow:".$currentTierXLSXcntrnext."$currentRow");
         $sheet->setCellValue("$currentTierXLSXcntr$currentRow", $timedArrayKey);
         $localRowIter = $currentRow+1; $localArrIter = 0;
-        foreach ( $timedArrayEntity->{'timelist'} as $singleScanTime) {
+        foreach ( $timedArrayEntity->{'timelist'} as $singleScanTime) { //that is just a render for a single date
             if ($localArrIter % 2 == 0) {
                 $sheet->setCellValue("$currentTierXLSXcntr$localRowIter", $singleScanTime);
             } else {
@@ -60,10 +64,45 @@ foreach ($in_preparedStructureForV2["scanlist"] as $valueScanlist) { //iterate o
             }
             $localArrIter+=1;
         }
+        if ($localRowIter>$currentRowMaximum_Tier) {
+            $currentRowMaximum_Tier = $localRowIter;
+        }
         $currentTierXLSXcntr = getPHPIncrementedXLSIndex($currentTierXLSXcntrnext);
         $currentIterCntr += 1;
+        if (($currentIterCntr % $datesInRow == 0)||($currentIterCntr == count($valueScanlist->{"timedarray"}) )) { 
+           //we are almost ready for tier switching or for end of operation, just render subtotal values with a propr offset
+           $currentTierXLSXcntr2 = 'B';
+           //$currentRowMaximum_Tier +=1;
+           $currentRowMaximum_TierNextOne = $currentRowMaximum_Tier+1;
+           $sheet->setCellValue("A$currentRowMaximum_Tier", $in_preparedStructureForV2["localizedmessages"]["scandatetime_header"]);
+           $sheet->setCellValue("A$currentRowMaximum_TierNextOne", $in_preparedStructureForV2["localizedmessages"]["overtimetext"]);
+           foreach ($currentTierKeys as $currentTierKeysItem) {
+               $currentTierXLSXcntrnext2 = getPHPIncrementedXLSIndex($currentTierXLSXcntr2);
+               $spreadsheet->getActiveSheet()->mergeCells("$currentTierXLSXcntr2$currentRowMaximum_Tier:".$currentTierXLSXcntrnext2."$currentRowMaximum_Tier");
+               $sheet->setCellValue("$currentTierXLSXcntr2$currentRowMaximum_Tier", $valueScanlist->{"timedarray"}[$currentTierKeysItem]->{"subtotaltime"});
+               
+               $spreadsheet->getActiveSheet()->mergeCells("$currentTierXLSXcntr2$currentRowMaximum_TierNextOne:".$currentTierXLSXcntrnext2."$currentRowMaximum_TierNextOne");
+               $sheet->setCellValue("$currentTierXLSXcntr2$currentRowMaximum_TierNextOne", $valueScanlist->{"timedarray"}[$currentTierKeysItem]->{"subtotalovertime"});
+               
+               $currentTierXLSXcntr2 = getPHPIncrementedXLSIndex($currentTierXLSXcntrnext2);
+               
+           }
+           $currentRow = $currentRowMaximum_Tier+2;
+        }
     }
 }
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getLeft()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getRight()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
+    ->getHorizontal()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 // Rename worksheet
 $spreadsheet->getActiveSheet()->setTitle('V2 Form');
 $spreadsheet->getProperties()->setCreator("SomeName")
