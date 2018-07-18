@@ -776,7 +776,11 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
     }   
     
         $dateStartString = null; $dateEndString = null; $sqlitedateStart = null; $sqlitedateEnd = null;
+        $useHtmlRenderer = true; //render to html (set to true) or to xlsx (set to false)
     if (isset($_GET) ) {    //// date and time fiddling
+        if (isset ($_GET["out"])&&($_GET["out"]=="xlsx")) {
+            $useHtmlRenderer = false;
+        }
         $fromDateEnabled = ( isset($_GET["from"])&& validateDate(urldecode($_GET["from"]) ) );
         $toDateEnabled = ( isset($_GET["to"])&& validateDate(urldecode($_GET["to"])) );
         
@@ -828,11 +832,17 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
     
     $templateTransmission["datetime"]["fromstring"] = urlencode($dateStartString);
     $templateTransmission["datetime"]["tostring"] = urlencode($dateEndString);    
+    
     if ($preparedCalculateTime == FALSE) {
             $rawscanTimeValues = $dbInstance->listScanTimesInRange($sqlitedateStart, $sqlitedateEnd);
             $rawscanTimeValues = prepareDataStructure($rawscanTimeValues);
         $templateTransmission["scanlist"] = $rawscanTimeValues;
-        return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+        if ($useHtmlRenderer == true) {
+            return $this->view->render($response, "listbarcode2.twig",$templateTransmission);
+        } else {
+            $debugLine = "<html><head></head><body>XLSX report is currently not implemented for \$preparedCalculateTime == FALSE</body> </html>";
+            return $response->withHeader('Content-type', 'text/html')->write($debugLine);
+        }
     } else {
             $rawscanTimeValues = $dbInstance->listScanTimesInRange2($sqlitedateStart, $sqlitedateEnd);
             $updatedscanTimeValues = aggregateDataStructure($rawscanTimeValues, date_time_set($time1,00,01), date_time_set($time2,23,59), $this->get('settings')['timezonestring'], $dbInstance );
@@ -841,10 +851,19 @@ $app->get('/list/v3[/]', function(Request $request, Response $response, array $a
         $templateTransmission["scanlist"] = $updatedscanTimeValues;
        $updatedscanTimeValues2 = postcalculateAggregatedDataStructure($rawscanTimeValues, $updatedscanTimeValues, $dbInstance, $this->get('settings')['timezonestring']);
         $templateTransmission["scanlist"] = $updatedscanTimeValues2;
+        if ($useHtmlRenderer == true) {
         return $this->view->render($response, "listbarcode3.twig",$templateTransmission);
+        } else {
+            $excelFileName = renderV3asXLSX($templateTransmission,$this->get('settings')['xlsxfolder'], $this->get('settings')['timezonestring']);
+            $response = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response = $response->withHeader('Content-Disposition', 'attachment; filename="'.$excelFileName.'"');
+            $stream = fopen($this->get('settings')['xlsxfolder'].'/'.$excelFileName, 'r+');
+            return $response->withBody(new \Slim\Http\Stream($stream));
+        }
         //$debugLine = "<html><head></head><body>HERE BE EXPANDED TABLE OF REGISTERED ITEMS</body> </html>";
         //return $response->withHeader('Content-type', 'text/html')->write($debugLine);
     }
+
 });
 //show scan times with calculated time
 $app->get('/list/v2[/]', function(Request $request, Response $response, array $args){

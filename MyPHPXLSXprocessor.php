@@ -91,6 +91,7 @@ foreach ($in_preparedStructureForV2["scanlist"] as $valueScanlist) { //iterate o
         }
     }
 }
+$currentRow -=1;
 $spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
     ->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 $spreadsheet->getActiveSheet()->getStyle("A2:K$currentRow")->getBorders()
@@ -123,4 +124,74 @@ $filepath = ( new DateTime("now", new DateTimeZone($in_timezonestr)) )->format("
 $writer->save($pathToSave.'/'.$filepath);
 return $filepath;
 }
+
+function renderV3asXLSX($in_preparedStructureForV3, $in_folderToSaveXLSX,$in_timezonestr) {
+        $pathToSave = checkExistenceOfXLSXFolderAndRecreateIt($in_folderToSaveXLSX);
+$spreadsheet = new Spreadsheet();
+$sheet = $spreadsheet->getActiveSheet();
+        $customHeaderTable=$in_preparedStructureForV3["localizedmessages"]["listv3timesheet"]."( ".$in_preparedStructureForV3["datetime"]["from"]." - ".$in_preparedStructureForV3["datetime"]["to"]." )";
+$sheet->setCellValue('A1', $customHeaderTable);
+//here is a report
+    //let's construct a table header from AllDates portion of table.
+    //A header always consists of rows 16 entries. At first row only first 15 entries are filled, the last one is X
+    //next rows are filled normally, utilizing all 16
+    $totalRowsInDatesHeader = round(count($in_preparedStructureForV3["scanlist"]->{"AllDates"})/16.0);
+    $spreadsheet->getActiveSheet()->mergeCells("E3:T3");
+    $spreadsheet->getActiveSheet()->getStyle('E3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("E3", $in_preparedStructureForV3["localizedmessages"]["listv3headeraboutdates"]);
+    $spreadsheet->getActiveSheet()->mergeCells("U3:AA3");
+    $spreadsheet->getActiveSheet()->getStyle('U3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("U3", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
+    
+        $spreadsheet->getActiveSheet()->mergeCells("V4:AA4");
+    $spreadsheet->getActiveSheet()->getStyle('V4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("V4", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
+        $spreadsheet->getActiveSheet()->mergeCells("U3:AA3");
+    $spreadsheet->getActiveSheet()->getStyle('U3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("U3", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
+    
+    $currentGlobalRowInDatesHeader=4; $currentGlobalColumnInDatesHeader='D'; $currentIndexInAllDates = -1; $dummyDateSymbol = 'X';
+    foreach ( $in_preparedStructureForV3["scanlist"]->{"AllDates"} as $singleDateFromAll) {
+        if ($currentGlobalColumnInDatesHeader=='T') {
+            $currentGlobalColumnInDatesHeader = 'E';
+            $currentGlobalRowInDatesHeader++;
+        } else {
+            $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
+        }
+        $currentIndexInAllDates++;
+        $dateSymbolToHold = '_';
+        if (($currentGlobalColumnInDatesHeader == 'T')&&($currentIndexInAllDates==15)) {
+            $dateSymbolToHold = $dummyDateSymbol;
+        } else {
+            $dateSymbolToHold =intval( explode('-', $singleDateFromAll[0])[2] );
+        }
+        $sheet->setCellValue("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader", $dateSymbolToHold);
+    }
+    while ($currentGlobalColumnInDatesHeader!='U'){
+        $sheet->setCellValue("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader", $dummyDateSymbol);
+        $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
+    }
+    $spreadsheet->getActiveSheet()->getStyle("E3:T$currentGlobalRowInDatesHeader")->getNumberFormat()->setFormatCode('00'); // will show as number with leading 0
+//main report code ends here
+$spreadsheet->getActiveSheet()->setTitle('V3 Form');
+$spreadsheet->getProperties()->setCreator("SomeName")
+    ->setTitle("XLSX Form for V3 report")
+    ->setSubject("XLSX Form for V3 report")
+    ->setDescription(
+        "XLSX Form for V3 report in date range: [".$in_preparedStructureForV3["datetime"]["from"].";".$in_preparedStructureForV3["datetime"]["to"]."]"
+    );
+$spreadsheet->getActiveSheet()->getPageSetup()
+    ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+$spreadsheet->getActiveSheet()->getPageSetup()
+    ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+$spreadsheet->setActiveSheetIndex(0);
+
+$writer = new Xlsx($spreadsheet);
+$filepath = ( new DateTime("now", new DateTimeZone($in_timezonestr)) )->format("dmY_His")."_v3table.xlsx";
+$writer->save($pathToSave.'/'.$filepath);
+return $filepath;
+
+}
+
 ?>
