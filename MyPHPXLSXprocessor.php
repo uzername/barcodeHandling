@@ -135,43 +135,137 @@ $sheet->setCellValue('A1', $customHeaderTable);
     //let's construct a table header from AllDates portion of table.
     //A header always consists of rows 16 entries. At first row only first 15 entries are filled, the last one is X
     //next rows are filled normally, utilizing all 16
-    $totalRowsInDatesHeader = round(count($in_preparedStructureForV3["scanlist"]->{"AllDates"})/16.0);
+    $totalRowsInDatesHeader = round( ceil((count($in_preparedStructureForV3["scanlist"]->{"AllDates"})+1)/16.0) );
+    $rowsHeader = 6;
+    if ($totalRowsInDatesHeader > 3) { //expand 'right' part of header vertically
+      $rowsHeader += $totalRowsInDatesHeader-2;
+    } 
     $spreadsheet->getActiveSheet()->mergeCells("E3:T3");
     $spreadsheet->getActiveSheet()->getStyle('E3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
     $sheet->setCellValue("E3", $in_preparedStructureForV3["localizedmessages"]["listv3headeraboutdates"]);
-    $spreadsheet->getActiveSheet()->mergeCells("U3:AA3");
+        $spreadsheet->getActiveSheet()->mergeCells("U3:Z3");
     $spreadsheet->getActiveSheet()->getStyle('U3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    $sheet->setCellValue("U3", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
-    
-        $spreadsheet->getActiveSheet()->mergeCells("V4:AA4");
+    $sheet->setCellValue("U3", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);    
+        $spreadsheet->getActiveSheet()->mergeCells("V4:Z4");
     $spreadsheet->getActiveSheet()->getStyle('V4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    $sheet->setCellValue("V4", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
-        $spreadsheet->getActiveSheet()->mergeCells("U3:AA3");
-    $spreadsheet->getActiveSheet()->getStyle('U3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    $sheet->setCellValue("U3", $in_preparedStructureForV3["localizedmessages"]["listv3headerformonth"]);
+    $sheet->setCellValue("V4", $in_preparedStructureForV3["localizedmessages"]["listv3headerhoursformonth"]);
+        $spreadsheet->getActiveSheet()->mergeCells("W5:Z5");
+    $spreadsheet->getActiveSheet()->getStyle('W5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("W5", $in_preparedStructureForV3["localizedmessages"]["listv3headerdetailed"]);
+        $spreadsheet->getActiveSheet()->mergeCells("U4:U$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('U4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("U4", $in_preparedStructureForV3["localizedmessages"]["listv3headerdaysformonth"]);
+         $spreadsheet->getActiveSheet()->mergeCells("V5:V$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('V5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("V5", $in_preparedStructureForV3["localizedmessages"]["listv3headertotal"]);
+    if ($rowsHeader>6) {
+         $spreadsheet->getActiveSheet()->mergeCells("W6:W$rowsHeader");
+         $spreadsheet->getActiveSheet()->mergeCells("X6:X$rowsHeader");
+         $spreadsheet->getActiveSheet()->mergeCells("Y6:Y$rowsHeader");
+         $spreadsheet->getActiveSheet()->mergeCells("Z6:Z$rowsHeader");
+    }
+    $spreadsheet->getActiveSheet()->getStyle('W6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("W6", $in_preparedStructureForV3["localizedmessages"]["listv3headerovertime"]);
+    $spreadsheet->getActiveSheet()->getStyle('X6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("X6", $in_preparedStructureForV3["localizedmessages"]["listv3headernight"]);
+    $spreadsheet->getActiveSheet()->getStyle('Y6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("Y6", $in_preparedStructureForV3["localizedmessages"]["listv3headerevening"]);
+    $spreadsheet->getActiveSheet()->getStyle('Z6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue("Z6", $in_preparedStructureForV3["localizedmessages"]["listv3headerholiday"]);
+    $spreadsheet->getActiveSheet()->mergeCells("A3:A$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $spreadsheet->getActiveSheet()->getStyle('A3')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    $sheet->setCellValue("A3", $in_preparedStructureForV3["localizedmessages"]["listv3headernumber"]);
+    $spreadsheet->getActiveSheet()->mergeCells("B3:B$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('B3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $spreadsheet->getActiveSheet()->getStyle('B3')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    $sheet->setCellValue("B3", $in_preparedStructureForV3["localizedmessages"]["listv3headerposition"]);
+    $spreadsheet->getActiveSheet()->mergeCells("C3:C$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('C3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $spreadsheet->getActiveSheet()->getStyle('C3')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    $sheet->setCellValue("C3", $in_preparedStructureForV3["localizedmessages"]["listv3headergender"]);
+    $spreadsheet->getActiveSheet()->mergeCells("D3:D$rowsHeader");
+    $spreadsheet->getActiveSheet()->getStyle('D3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $spreadsheet->getActiveSheet()->getStyle('D3')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    $sheet->setCellValue("D3", $in_preparedStructureForV3["localizedmessages"]["listv3headername"]);
     
-    $currentGlobalRowInDatesHeader=4; $currentGlobalColumnInDatesHeader='D'; $currentIndexInAllDates = -1; $dummyDateSymbol = 'X';
-    foreach ( $in_preparedStructureForV3["scanlist"]->{"AllDates"} as $singleDateFromAll) {
+    $spreadsheet->getActiveSheet()->getStyle("A3:Z$rowsHeader")->getAlignment()->setWrapText(true);
+    $spreadsheet->getActiveSheet()->getStyle("A3:Z$rowsHeader")->getFont()->setName("Times New Roman");
+    $spreadsheet->getActiveSheet()->getStyle("A3:Z$rowsHeader")->getFont()->setSize(8.0);
+    $currentGlobalRowInDatesHeader=4; $currentGlobalColumnInDatesHeader='D'; $currentIndexInAllDates = 0; $dummyDateSymbol = 'X';
+    //foreach ( $in_preparedStructureForV3["scanlist"]->{"AllDates"} as $singleDateFromAll) {
+    $cnt1Dates = count($in_preparedStructureForV3["scanlist"]->{"AllDates"});
+    while ($currentIndexInAllDates<$cnt1Dates) {
         if ($currentGlobalColumnInDatesHeader=='T') {
             $currentGlobalColumnInDatesHeader = 'E';
             $currentGlobalRowInDatesHeader++;
         } else {
             $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
         }
-        $currentIndexInAllDates++;
+        
+        $singleDateFromAll = $in_preparedStructureForV3["scanlist"]->{"AllDates"} [$currentIndexInAllDates];
         $dateSymbolToHold = '_';
         if (($currentGlobalColumnInDatesHeader == 'T')&&($currentIndexInAllDates==15)) {
             $dateSymbolToHold = $dummyDateSymbol;
+            $currentIndexInAllDates-=1;
         } else {
             $dateSymbolToHold =intval( explode('-', $singleDateFromAll[0])[2] );
         }
+        if (($totalRowsInDatesHeader <= 2)&&($currentGlobalRowInDatesHeader == 5)) {
+            $spreadsheet->getActiveSheet()->mergeCells("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader:$currentGlobalColumnInDatesHeader$rowsHeader");
+        }
         $sheet->setCellValue("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader", $dateSymbolToHold);
+        $currentIndexInAllDates++;
     }
+    $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
     while ($currentGlobalColumnInDatesHeader!='U'){
         $sheet->setCellValue("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader", $dummyDateSymbol);
         $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
     }
     $spreadsheet->getActiveSheet()->getStyle("E3:T$currentGlobalRowInDatesHeader")->getNumberFormat()->setFormatCode('00'); // will show as number with leading 0
+    //move on with buddies
+    $nomerpp=0;
+    $currentGlobalRowInReport = $currentGlobalRowInDatesHeader+1; $initialGlobalRowInReport = $currentGlobalRowInReport;
+    foreach ($in_preparedStructureForV3["scanlist"]->{"AllUsers"} as $valueBuddy) {
+        $nomerpp++;
+        $currentLimitForGlobalRow = $currentGlobalRowInReport+$totalRowsInDatesHeader*2-1;
+        $spreadsheet->getActiveSheet()->mergeCells("A$currentGlobalRowInReport:A$currentLimitForGlobalRow");
+        $sheet->setCellValue("A$currentGlobalRowInReport", $nomerpp);
+        $spreadsheet->getActiveSheet()->mergeCells("B$currentGlobalRowInReport:B$currentLimitForGlobalRow");
+        $sheet->setCellValue("B$currentGlobalRowInReport", $valueBuddy->{'xlsx'}->{'position'});
+        $spreadsheet->getActiveSheet()->mergeCells("C$currentGlobalRowInReport:C$currentLimitForGlobalRow");
+        $sheet->setCellValue("C$currentGlobalRowInReport", $valueBuddy->{'xlsx'}->{'gender'});
+        $spreadsheet->getActiveSheet()->mergeCells("D$currentGlobalRowInReport:D$currentLimitForGlobalRow");
+        $sheet->setCellValue("D$currentGlobalRowInReport", explode('[',$valueBuddy->{'display'})[0] );
+        
+        $currentGlobalRowInDatesIterator=$currentGlobalRowInReport; $currentGlobalColumnInDatesIterator='D'; $currentIndexInAllDates = 0;
+        while ($currentIndexInAllDates<$cnt1Dates) {
+            if ($currentGlobalColumnInDatesIterator=='T') {
+                $currentGlobalColumnInDatesIterator = 'E';
+                $currentGlobalRowInDatesIterator+=2;
+            } else {
+                $currentGlobalColumnInDatesIterator = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesIterator);
+            }
+            if (($currentGlobalColumnInDatesIterator == 'T')&&($currentIndexInAllDates==15)) {
+                $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", 0 );
+                $currentIndexInAllDates-=1;
+            } else {
+            
+                if (isset($valueBuddy->{'timedarray'}[$currentIndexInAllDates])) {
+                    $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", $valueBuddy->{'timedarray'}[$currentIndexInAllDates][1] );
+                } else {
+                    $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", 0 );
+                }
+            
+            }
+            $currentIndexInAllDates++;
+        }
+        $currentGlobalRowInReport = $currentLimitForGlobalRow+1;
+    }
+    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(20);
+    $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setWrapText(true);
+    $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+    $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
 //main report code ends here
 $spreadsheet->getActiveSheet()->setTitle('V3 Form');
 $spreadsheet->getProperties()->setCreator("SomeName")

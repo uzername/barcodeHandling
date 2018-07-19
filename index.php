@@ -407,8 +407,9 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
  * @param $in_injectedLocalTimeZone - string with timezone for dates calculation
  * @param DataBaseHandler $in_injectedDBstructure - it is handy to have Database structure around
  * @return stdClass fields: 'AllDates' (each item is array with 2 elements:date string and number of week (1 is monday, 7 is sunday)) and 'AllUsers'. 
- * 'AllUsers' is associative array with keys of BarcodeText and values of stdClass object. Each stdClass object has 2 properties: 'timedarray' and 'display'.
+ * 'AllUsers' is associative array with keys of BarcodeText and values of stdClass object. Each stdClass object has 3 properties: 'timedarray' and 'display' and 'xlsx'.
  * 'display' is a string and 'timedarray' is array with numerical indexes. These indexes correspond to entries in AllDates Array. If some index is not set then it means that there is no entries for this date.
+ * 'xlsx' is stdClass object
  * If some index is set then the entry is array. 
  * Item[0] is TotalHourSpan for total time, Item[1] is its converted float value. Item[2] is 0 (break time not used) or 1 (break time used). Item[3] is TotalHourSpan for total overtime, Item[4] is float
  */
@@ -489,12 +490,14 @@ function aggregateDataStructure($in_Structure, DateTime $in_dateTimeStart, DateT
             }
         //+++++++++++++
         
-        //have we met this user before ?
+        //have we met this user before ? SET HERE THE BASIC USER IDENTIFICATION INFO
         if (isset($rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]) == FALSE) { //...no, we have not                        
             $prevTimeStamp = null; $currentPeriodClosed = TRUE;
-            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}] = (object)['timedarray'=>[], 'display'=>''];
+            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}] = (object)['timedarray'=>[], 'display'=>'','xlsx'=>(object)['gender'=>0, 'position'=>'']];
             $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'display'}=$valueFromStructure->{"FIELD1"}." ".$valueFromStructure->{"FIELD2"}." ".$valueFromStructure->{"FIELD3"}
                                                                               ."[".$valueFromStructure->{"BCODE"}.",".$valueFromStructure->{"RAWBARCODE"}."]";
+            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'xlsx'}->{'gender'} = $valueFromStructure->{"GENDER"};
+            $rawResult->{'AllUsers'}[$valueFromStructure->{"BCODE"}]->{'xlsx'}->{'position'} = $valueFromStructure->{"POSITION"};
             $heuristicsSubtractBreakTime = TRUE;
         }
         // http://php.net/manual/ru/function.property-exists.php
