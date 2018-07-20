@@ -138,7 +138,7 @@ $sheet->setCellValue('A1', $customHeaderTable);
     $totalRowsInDatesHeader = round( ceil((count($in_preparedStructureForV3["scanlist"]->{"AllDates"})+1)/16.0) );
     $rowsHeader = 6;
     if ($totalRowsInDatesHeader > 3) { //expand 'right' part of header vertically
-      $rowsHeader += $totalRowsInDatesHeader-2;
+      $rowsHeader += $totalRowsInDatesHeader-3;
     } 
     $spreadsheet->getActiveSheet()->mergeCells("E3:T3");
     $spreadsheet->getActiveSheet()->getStyle('E3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -219,11 +219,15 @@ $sheet->setCellValue('A1', $customHeaderTable);
     }
     $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
     while ($currentGlobalColumnInDatesHeader!='U'){
+        if ($currentGlobalRowInDatesHeader<6) {
+            $spreadsheet->getActiveSheet()->mergeCells("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader:".$currentGlobalColumnInDatesHeader."6");
+        }
         $sheet->setCellValue("$currentGlobalColumnInDatesHeader$currentGlobalRowInDatesHeader", $dummyDateSymbol);
         $currentGlobalColumnInDatesHeader = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesHeader);
     }
     $spreadsheet->getActiveSheet()->getStyle("E3:T$currentGlobalRowInDatesHeader")->getNumberFormat()->setFormatCode('00'); // will show as number with leading 0
     //move on with buddies
+    if ($currentGlobalRowInDatesHeader<6) {$currentGlobalRowInDatesHeader = 6;}
     $nomerpp=0;
     $currentGlobalRowInReport = $currentGlobalRowInDatesHeader+1; $initialGlobalRowInReport = $currentGlobalRowInReport;
     foreach ($in_preparedStructureForV3["scanlist"]->{"AllUsers"} as $valueBuddy) {
@@ -239,6 +243,7 @@ $sheet->setCellValue('A1', $customHeaderTable);
         $sheet->setCellValue("D$currentGlobalRowInReport", explode('[',$valueBuddy->{'display'})[0] );
         
         $currentGlobalRowInDatesIterator=$currentGlobalRowInReport; $currentGlobalColumnInDatesIterator='D'; $currentIndexInAllDates = 0;
+        $currentTotalDays = 0; $currentOvertimeTotal = 0.0; $currentHoursTotal = 0.0; $currentHolidayHoursTotal=0.0;
         while ($currentIndexInAllDates<$cnt1Dates) {
             if ($currentGlobalColumnInDatesIterator=='T') {
                 $currentGlobalColumnInDatesIterator = 'E';
@@ -253,6 +258,13 @@ $sheet->setCellValue('A1', $customHeaderTable);
             
                 if (isset($valueBuddy->{'timedarray'}[$currentIndexInAllDates])) {
                     $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", $valueBuddy->{'timedarray'}[$currentIndexInAllDates][1] );
+                    $currentOvertimeTotal+=$valueBuddy->{'timedarray'}[$currentIndexInAllDates][4];
+                    $currentHoursTotal +=$valueBuddy->{'timedarray'}[$currentIndexInAllDates][1];
+                    //calculate here a holiday hours
+                    if ($in_preparedStructureForV3["scanlist"]->{"AllDates"}[$currentIndexInAllDates][1]>=6) {
+                        $currentHolidayHoursTotal+=$valueBuddy->{'timedarray'}[$currentIndexInAllDates][1];
+                    }
+                    $currentTotalDays++;
                 } else {
                     $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", 0 );
                 }
@@ -260,12 +272,33 @@ $sheet->setCellValue('A1', $customHeaderTable);
             }
             $currentIndexInAllDates++;
         }
+        while ($currentGlobalColumnInDatesIterator!='U'){
+            $sheet->setCellValue("$currentGlobalColumnInDatesIterator$currentGlobalRowInDatesIterator", 0 );
+            $currentGlobalColumnInDatesIterator = getPHPIncrementedXLSIndex($currentGlobalColumnInDatesIterator);
+        }
+        //total days
+        $spreadsheet->getActiveSheet()->mergeCells("U$currentGlobalRowInReport:U$currentLimitForGlobalRow");
+        $spreadsheet->getActiveSheet()->mergeCells("V$currentGlobalRowInReport:V$currentLimitForGlobalRow");
+        $spreadsheet->getActiveSheet()->mergeCells("W$currentGlobalRowInReport:W$currentLimitForGlobalRow");
+        $spreadsheet->getActiveSheet()->mergeCells("X$currentGlobalRowInReport:X$currentLimitForGlobalRow");
+        $spreadsheet->getActiveSheet()->mergeCells("Y$currentGlobalRowInReport:Y$currentLimitForGlobalRow");
+        $spreadsheet->getActiveSheet()->mergeCells("Z$currentGlobalRowInReport:Z$currentLimitForGlobalRow");
+        $sheet->setCellValue("U$currentGlobalRowInReport", $currentTotalDays);
+        $sheet->setCellValue("V$currentGlobalRowInReport", $currentHoursTotal);
+        $sheet->setCellValue("W$currentGlobalRowInReport", $currentOvertimeTotal);
+        $sheet->setCellValue("Z$currentGlobalRowInReport", $currentHolidayHoursTotal);
+        
         $currentGlobalRowInReport = $currentLimitForGlobalRow+1;
     }
     $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(20);
     $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setWrapText(true);
     $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
     $spreadsheet->getActiveSheet()->getStyle("D$initialGlobalRowInReport:D$currentGlobalRowInReport")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(20);
+    $spreadsheet->getActiveSheet()->getStyle("B$initialGlobalRowInReport:B$currentGlobalRowInReport")->getAlignment()->setWrapText(true);
+    $spreadsheet->getActiveSheet()->getStyle("B$initialGlobalRowInReport:B$currentGlobalRowInReport")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+    $spreadsheet->getActiveSheet()->getStyle("B$initialGlobalRowInReport:B$currentGlobalRowInReport")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+    
 //main report code ends here
 $spreadsheet->getActiveSheet()->setTitle('V3 Form');
 $spreadsheet->getProperties()->setCreator("SomeName")
