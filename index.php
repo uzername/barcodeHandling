@@ -372,9 +372,12 @@ function calculateHoursDataStructure($in_Structure, DataBaseHandler $in_injected
                     if ($dateMissed<$startOfDay) {
                         $datespanSubtotalOvertime->addDateIntervalToThis(date_diff($dateMissed, $startOfDay));
                     }
+                    
                     if($refinedInvolveBreakTime==TRUE) { //subtract break time, if it was a last scan and it happened before break time start
-                        if ($dateMissed<$detalizedBreak->{'breakstart'}) {
+                        if (($dateMissed<$detalizedBreak->{'breakstart'})&&($injectedLocalTime>$detalizedBreak->{'breakstart'} )) {
                             $heuristicsSubtractBreakTime = TRUE; 
+                        } else {
+                            $heuristicsSubtractBreakTime = FALSE;
                         }
                     }
                     
