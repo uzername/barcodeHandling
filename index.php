@@ -621,6 +621,7 @@ function obtainIndexFromStructure($in_inStructure2, $in_dateString) {
  * @param $in_Structure2 - a structure, obtained from aggregateDataStructure. A prefinal one?
  */
 function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, DataBaseHandler $in_injectedDBstructure, $in_injectedLocalTimeZone) {
+        $injectedLocalTime = new DateTime("now",new DateTimeZone($in_injectedLocalTimeZone));
        $structureToReturn = $in_Structure2;
        $defaultScheduleToUse = []; $defaultBreakToUse = []; $heuristicsSubtractBreakTime = TRUE;
        $configurationsOfAlgorithm = $in_injectedDBstructure->getExistingSettings();
@@ -654,7 +655,7 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
             continue; 
             }
         $currTimeStamp = DateTime::createFromFormat("Y-m-d H:i:s", $in_Structure1[$i]->{'SCANDATETIME'}, new DateTimeZone($in_injectedLocalTimeZone) );
-        $currUsrStamp = $in_Structure1[$i]->{'BCODE'};
+        $currUsrStamp = $in_Structure1[$i]->{'BCODE'}; $UsrTagToUse = $currUsrStamp;
         // if one of these keys is turned then we need to recalculate break time and end the streak. 
         // $brassKeyOfDateSwitching == true when the current date in scan array is 1 day more than the previous one.
         // $bronzeKeyOfUserSwitching == true when the entity for scan is different then previous one.
@@ -719,10 +720,13 @@ function postcalculateAggregatedDataStructure($in_Structure1, $in_Structure2, Da
         || 
         (($currTimeStamp<$detalizedBreak->{'breakstart'})&&($in_Structure1[$i+1]->{'SCANDATETIME'} == null)&&($in_Structure1[$i+1]->{'SCANID'} == null)&&($i+2 == $countOfStructure)) ) //may happen in some rare testcases
         { 
+            //subtract break time. But only when it really occured
+            if ($injectedLocalTime>$detalizedBreak->{'breakstart'} ) {
                         $foundindex = obtainIndexFromStructure($in_Structure2,$currTimeStamp);
                         $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][2] = 1;
                         $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][1] -= $detalizedBreak->{'breakintrvlfloat'} ;
                         $structureToReturn->{'AllUsers'}[intval($UsrTagToUse)]->{'timedarray'}[$foundindex][0]->subtractDateIntervalToThis($detalizedBreak->{'breakintrvl'});
+            }
         }
         $prevTimeStamp = $currTimeStamp;
         $prevUsrStamp = $currUsrStamp;
