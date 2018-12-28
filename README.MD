@@ -2,7 +2,7 @@
 
 ### installation
 
-The folder /vendor with used libraries is not included in project. If it is there - then it is a development build, which is ready to deploy, so skip this. Run `php composer.phar install` so that dependencies ( Slim php (with monolog with Twig) with barcode library ) are actually available to use in your application, they are listed in composer.json .
+The folder /vendor with used libraries is not included in project. If it is there - then it is a development build, which is ready to deploy, so skip this. Run `php composer.phar install` so that dependencies ( Slim php (with monolog with Twig) with barcode library with phpoffice ) are actually available to use in your application, they are listed in composer.json .
 
 Create also /data/ and /data/barcodes folders in the root of your installation
 
